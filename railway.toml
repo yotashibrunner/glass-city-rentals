@@ -1,0 +1,12 @@
+# Railway deploy config.
+# Runs migrations on every deploy, then boots the server.
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run migrate:up && npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10

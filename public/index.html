@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glass City Trailer Rentals LLC — Toledo, OH | Trailer & Dumpster Rentals</title>
+<meta name="description" content="Trailer rentals in Toledo, Ohio. Car haulers, dump trailers, enclosed trailers, utility trailers & 25-yard roll-off dumpsters. By the hour, day, week, or month. Call (419) 654-3584 or (567) 686-6265." />
+
+<meta property="og:title" content="Glass City Trailer Rentals LLC" />
+<meta property="og:description" content="Toledo's trailer rental fleet — hourly, daily, weekly, monthly. Call (419) 654-3584." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="images/trailer-gooseneck-snow.jpg" />
+
+<link rel="icon" href="images/logo.png" />
+<link rel="apple-touch-icon" href="images/logo.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #0a0d0a;
+    --bg-2: #0d110d;
+    --ink: #f4f5ef;
+    --ink-dim: #9a9e93;
+    --line: #1c211d;
+    --line-2: #2a312c;
+    --green: #2ecc40;
+    --green-deep: #1faa30;
+    --green-glow: rgba(46, 204, 64, 0.13);
+    --green-glow-strong: rgba(46, 204, 64, 0.25);
+    --hazard: #ffd400;
+    --danger: #ff4d3a;
+    --r-card: 4px;
+    --max: 1320px;
+    --shadow: 0 30px 60px -20px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; }
+
+  /* Subtle background grid */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(circle at 50% 30%, black 30%, transparent 80%);
+  }
+
+  .container { max-width: var(--max); margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+  @media (max-width: 600px) { .container { padding: 0 18px; } }
+
+  /* ---------- Type ---------- */
+  .display {
+    font-family: 'Anton', 'Arial Narrow', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    line-height: .9;
+    text-transform: uppercase;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+  .dim { color: var(--ink-dim); }
+
+  /* ---------- Top Brand Strip (white letterhead) ---------- */
+  .brand-strip {
+    background: #ffffff;
+    color: #0a0d0a;
+    border-bottom: 3px solid var(--green);
+    position: relative;
+    z-index: 51;
+  }
+  .brand-strip-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 16px 28px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 24px;
+  }
+  .brand-logo {
+    height: 64px;
+    width: auto;
+  }
+  .brand-strip-mid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .brand-strip-mid .name {
+    font-family: 'Anton', sans-serif;
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+  }
+  .brand-strip-mid .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #555;
+  }
+  .brand-strip-mid .tag .pulse {
+    display: inline-block; width: 7px; height: 7px;
+    background: var(--green); border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+    box-shadow: 0 0 0 0 var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(46, 204, 64, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(46, 204, 64, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(46, 204, 64, 0); }
+  }
+  .brand-phones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .brand-phones a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #0a0d0a;
+    color: #fff;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    transition: background .2s;
+  }
+  .brand-phones a:hover { background: var(--green); color: #07140a; }
+  .brand-phones a:first-child { background: var(--green); color: #07140a; }
+  .brand-phones a:first-child:hover { background: #46e35c; }
+  .brand-phones svg { width: 14px; height: 14px; }
+  @media (max-width: 900px) {
+    .brand-strip-inner { grid-template-columns: 1fr; gap: 12px; text-align: center; padding: 14px 20px; }
+    .brand-logo { height: 56px; margin: 0 auto; }
+    .brand-phones { justify-content: center; flex-wrap: wrap; }
+    .brand-strip-mid { align-items: center; }
+  }
+
+  /* ---------- Sticky Nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(18px);
+    background: rgba(10,13,10,.85);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 58px;
+  }
+  .nav-brand-mini {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Anton', sans-serif;
+    font-size: 17px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .nav-brand-mini .dot {
+    width: 10px; height: 10px;
+    background: var(--green); border-radius: 50%;
+  }
+  .nav-links { display: flex; gap: 4px; align-items: center; }
+  .nav-links a {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    border-radius: 4px;
+    transition: color .2s, background .2s;
+    letter-spacing: .02em;
+  }
+  .nav-links a:hover { color: var(--ink); background: var(--line); }
+  .nav-cta {
+    background: var(--green);
+    color: #07140a !important;
+    font-weight: 600;
+    padding: 10px 16px !important;
+    display: inline-flex !important; align-items: center; gap: 8px;
+    margin-left: 8px;
+  }
+  .nav-cta:hover { background: #46e35c !important; }
+  @media (max-width: 760px) {
+    .nav-links a:not(.nav-cta) { display: none; }
+    .nav-inner { padding: 0 18px; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 600px;
+    display: flex;
+    align-items: stretch;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 60%;
+    filter: brightness(.55) contrast(1.05) saturate(.85);
+  }
+  .hero-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(10,13,10,.6) 0%, rgba(10,13,10,.4) 40%, rgba(10,13,10,.95) 100%),
+      linear-gradient(90deg, rgba(10,13,10,.85) 0%, rgba(10,13,10,.3) 60%, transparent 100%);
+  }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 100px 28px 120px;
+    display: grid;
+    grid-template-columns: 1.5fr .8fr;
+    gap: 60px;
+    align-items: end;
+  }
+  @media (max-width: 900px) {
+    .hero-content { grid-template-columns: 1fr; gap: 36px; padding: 60px 18px 80px; }
+    .hero { min-height: 540px; }
+  }
+  .hero h1 {
+    margin: 24px 0 0;
+    font-size: clamp(60px, 11vw, 156px);
+  }
+  .hero h1 .accent { color: var(--green); }
+  .hero h1 .stroke {
+    -webkit-text-stroke: 2px var(--ink);
+    color: transparent;
+  }
+  .hero-tag {
+    margin-top: 28px;
+    max-width: 540px;
+    font-size: 17px;
+    color: rgba(244, 245, 239, .85);
+    line-height: 1.5;
+  }
+  .hero-tag strong { color: var(--ink); font-weight: 600; }
+  .hero-ctas {
+    margin-top: 36px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 24px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    transition: all .2s ease;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: #07140a;
+    box-shadow: 0 8px 30px -10px var(--green);
+  }
+  .btn-primary:hover { background: #46e35c; transform: translateY(-1px); }
+  .btn-ghost {
+    background: rgba(10,13,10,.6);
+    color: var(--ink);
+    border-color: rgba(244, 245, 239, .25);
+    backdrop-filter: blur(6px);
+  }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); background: rgba(10,13,10,.8); }
+  .btn-block { width: 100%; justify-content: center; }
+
+  /* Hero stats */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid rgba(244, 245, 239, .2);
+    border-radius: var(--r-card);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    background: rgba(10,13,10,.5);
+  }
+  .stat {
+    padding: 18px 16px;
+    border-right: 1px solid rgba(244, 245, 239, .15);
+  }
+  .stat:last-child { border-right: 0; }
+  .stat-num {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    color: var(--green);
+    line-height: 1;
+  }
+  .stat-lbl {
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(244, 245, 239, .7);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Marquee ---------- */
+  .ticker {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-2);
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+  .ticker-track {
+    display: flex;
+    gap: 60px;
+    padding: 14px 0;
+    width: max-content;
+    animation: ticker 38s linear infinite;
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .ticker-track span { display: inline-flex; align-items: center; gap: 60px; color: var(--ink-dim); white-space: nowrap; }
+  .ticker-track .dot {
+    width: 7px; height: 7px; background: var(--green); border-radius: 50%;
+  }
+  @keyframes ticker {
+    to { transform: translateX(-50%); }
+  }
+
+  /* ---------- Section base ---------- */
+  section { padding: 100px 0; position: relative; z-index: 1; }
+  @media (max-width: 700px) { section { padding: 70px 0; } }
+  .section-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: end;
+    margin-bottom: 50px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 30px;
+  }
+  .section-head h2 {
+    margin: 14px 0 0;
+    font-size: clamp(40px, 6vw, 72px);
+  }
+  .section-head p {
+    max-width: 380px;
+    color: var(--ink-dim);
+    margin: 0;
+  }
+  @media (max-width: 700px) {
+    .section-head { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Fleet ---------- */
+  .fleet {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 900px) { .fleet { grid-template-columns: 1fr; } }
+  .trailer {
+    position: relative;
+    background: linear-gradient(180deg, #10141060, var(--bg-2));
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .25s, transform .25s;
+  }
+  .trailer:hover { border-color: var(--green); transform: translateY(-3px); }
+  .trailer-photo {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+  }
+  .trailer-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s ease;
+  }
+  .trailer:hover .trailer-photo img { transform: scale(1.04); }
+  .trailer-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(10,13,10,.4) 100%);
+    pointer-events: none;
+  }
+  .trailer-tag {
+    position: absolute;
+    top: 14px; left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    border: 1px solid var(--green);
+    padding: 4px 8px;
+    border-radius: 2px;
+    background: rgba(10,13,10,.7);
+    backdrop-filter: blur(6px);
+    z-index: 2;
+  }
+  .trailer-size {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    background: rgba(10,13,10,.7);
+    backdrop-filter: blur(6px);
+    padding: 4px 8px;
+    border-radius: 2px;
+    z-index: 2;
+  }
+  .trailer-body {
+    padding: 24px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 18px;
+  }
+  .trailer h3 {
+    margin: 0;
+    font-family: 'Anton', sans-serif;
+    font-size: 30px;
+    letter-spacing: .005em;
+    line-height: .95;
+    text-transform: uppercase;
+  }
+  .trailer-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin: 0;
+    padding: 0;
+  }
+  .trailer-specs li {
+    list-style: none;
+    padding-left: 14px;
+    position: relative;
+  }
+  .trailer-specs li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px;
+    width: 6px; height: 1px; background: var(--green);
+  }
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .price-cell {
+    padding: 12px 8px;
+    text-align: center;
+    border-right: 1px solid var(--line);
+    background: rgba(10,13,10,.4);
+  }
+  .price-cell:last-child { border-right: 0; }
+  .price-cell .amt {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .price-cell .per {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-dim);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .price-cell.na .amt { color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; font-size: 14px; padding-top: 4px; }
+  .trailer-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 14px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line-2);
+  }
+  .reqs {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .reqs strong { color: var(--ink); font-weight: 500; }
+  .quote-btn {
+    background: transparent;
+    color: var(--green);
+    border: 1px solid var(--line-2);
+    padding: 9px 14px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .quote-btn:hover { background: var(--green); color: #07140a; border-color: var(--green); }
+  .trailer-extra-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    border-left: 2px solid var(--green);
+    padding-left: 10px;
+    line-height: 1.5;
+  }
+
+  /* ---------- 25-Yarder Feature Card ---------- */
+  .feature-25 {
+    margin-top: 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    background: var(--bg-2);
+    position: relative;
+  }
+  @media (max-width: 900px) { .feature-25 { grid-template-columns: 1fr; } }
+  .feature-25-photo {
+    position: relative;
+    overflow: hidden;
+    min-height: 320px;
+  }
+  .feature-25-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .feature-25-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 40%, var(--bg-2) 100%);
+  }
+  @media (max-width: 900px) { .feature-25-photo::after { background: linear-gradient(180deg, transparent 40%, var(--bg-2) 100%); } }
+  .feature-25-body {
+    padding: 38px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    justify-content: center;
+  }
+  .feature-25-body .badge {
+    display: inline-block;
+    background: var(--hazard);
+    color: #0a0d0a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    align-self: start;
+  }
+  .feature-25-body h3 {
+    margin: 0;
+    font-family: 'Anton', sans-serif;
+    font-size: 44px;
+    line-height: .95;
+    text-transform: uppercase;
+  }
+  .feature-25-pricing {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .feature-25-pricing > div {
+    padding: 14px 12px;
+    border-right: 1px solid var(--line);
+    background: rgba(10,13,10,.4);
+  }
+  .feature-25-pricing > div:last-child { border-right: 0; }
+  .feature-25-pricing .amt {
+    font-family: 'Anton', sans-serif;
+    font-size: 28px;
+    color: var(--green);
+    line-height: 1;
+  }
+  .feature-25-pricing .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+  .feature-25-rules {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    line-height: 1.6;
+  }
+  .feature-25-rules .warn { color: var(--hazard); }
+  .feature-25-cta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* ---------- Quote Builder ---------- */
+  #quote {
+    background:
+      radial-gradient(1400px 500px at 0% 0%, var(--green-glow), transparent 60%),
+      var(--bg);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .quote-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .quote-grid { grid-template-columns: 1fr; } }
+
+  .quote-form {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 30px;
+  }
+  .field { margin-bottom: 22px; }
+  .field-lbl {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+  .field-lbl .req { color: var(--danger); }
+
+  .seg {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .seg input[type="radio"] { display: none; }
+  .seg label {
+    padding: 12px 6px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--line-2);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    color: var(--ink-dim);
+  }
+  .seg label:last-of-type { border-right: 0; }
+  .seg label:hover { color: var(--ink); }
+  .seg input[type="radio"]:checked + label {
+    background: var(--green);
+    color: #07140a;
+    font-weight: 700;
+  }
+  .seg input[type="radio"]:disabled + label {
+    opacity: .3;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+
+  .trailer-picker {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .trailer-opt {
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+    padding: 12px 14px;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    transition: all .2s;
+  }
+  .trailer-opt:hover { border-color: var(--green); }
+  .trailer-opt.selected {
+    border-color: var(--green);
+    background: var(--green-glow);
+  }
+  .trailer-opt-thumb {
+    width: 60px;
+    height: 44px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #000;
+  }
+  .trailer-opt-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .trailer-opt .opt-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .trailer-opt .opt-sub {
+    margin-top: 2px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .trailer-opt .opt-rate {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right;
+  }
+
+  input[type="number"], input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+    width: 100%;
+    background-color: #07090a;
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+    padding: 14px 16px;
+    border-radius: 4px;
+    font-size: 15px;
+    transition: border-color .2s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--green);
+  }
+  textarea { resize: vertical; min-height: 110px; }
+
+  /* Quote summary */
+  .quote-summary {
+    position: sticky;
+    top: 80px;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 30px;
+    overflow: hidden;
+  }
+  .qs-head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px dashed var(--line-2);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .qs-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
+  .qs-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    border-bottom: 1px dashed #1a1f1a;
+    gap: 12px;
+  }
+  .qs-row span:last-child { color: var(--ink); text-align: right; }
+  .qs-total {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line-2);
+    display: flex; justify-content: space-between; align-items: end;
+  }
+  .qs-total .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .qs-total .val {
+    font-family: 'Anton', sans-serif;
+    font-size: 56px;
+    line-height: .9;
+    color: var(--green);
+  }
+  .qs-note {
+    font-size: 11px;
+    color: var(--ink-dim);
+    margin-top: 16px;
+    line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Service Area ---------- */
+  .service {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 50px;
+    align-items: center;
+  }
+  @media (max-width: 800px) { .service { grid-template-columns: 1fr; } }
+  .cities {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--line);
+  }
+  .cities div {
+    padding: 18px 4px;
+    border-bottom: 1px solid var(--line);
+    font-family: 'Anton', sans-serif;
+    font-size: 26px;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: padding-left .25s, color .25s;
+  }
+  .cities div:hover { padding-left: 12px; color: var(--green); }
+  .cities .miles {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: .15em;
+  }
+  .service-pic {
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 30px;
+    background: var(--bg-2);
+    position: relative;
+  }
+  .service-pic svg { width: 100%; height: auto; color: var(--green); }
+  .service-callout {
+    position: absolute;
+    top: 24px; right: 24px;
+    background: var(--green);
+    color: #07140a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 2px;
+  }
+
+  /* ---------- Contact ---------- */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 50px;
+  }
+  @media (max-width: 800px) { .contact-grid { grid-template-columns: 1fr; } }
+  .contact-info dl {
+    margin: 0;
+  }
+  .contact-info dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-top: 26px;
+  }
+  .contact-info dt:first-child { margin-top: 0; }
+  .contact-info dd {
+    margin: 8px 0 0;
+    font-family: 'Anton', sans-serif;
+    font-size: 28px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .contact-info dd a:hover { color: var(--green); }
+  .contact-info dd + dd { margin-top: 6px; }
+  .contact-info dd.small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    text-transform: none;
+    font-weight: 500;
+  }
+  .form-status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 18px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 50px 0 40px;
+    position: relative;
+    z-index: 1;
+    background: var(--bg-2);
+  }
+  .foot-top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  @media (max-width: 800px) { .foot-top { grid-template-columns: 1fr; } }
+  .foot-top h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin: 0 0 14px;
+  }
+  .foot-top a { display: block; padding: 4px 0; color: var(--ink-dim); font-size: 14px; }
+  .foot-top a:hover { color: var(--ink); }
+  .foot-bottom {
+    padding-top: 24px;
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .foot-tag {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(48px, 9vw, 96px);
+    line-height: .9;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+  .foot-tag .accent { color: var(--green); }
+  .foot-logo {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 14px;
+  }
+  .foot-logo img { height: 50px; }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .ticker-track { animation: none; }
+    .brand-strip-mid .tag .pulse { animation: none; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--green);
+    color: #07140a;
+    padding: 14px 22px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    box-shadow: 0 12px 30px -10px rgba(46, 204, 64, .5);
+    transition: transform .4s ease;
+    z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- =================== TOP BRAND STRIP =================== -->
+<div class="brand-strip">
+  <div class="brand-strip-inner">
+    <a href="#top">
+      <img src="images/logo.png" alt="Glass City Trailer Rentals LLC" class="brand-logo" />
+    </a>
+    <div class="brand-strip-mid">
+      <div class="name">Trailer & Dumpster Rentals</div>
+      <div class="tag"><span class="pulse"></span>Open Now · Toledo, OH · Locally Owned</div>
+    </div>
+    <div class="brand-phones">
+      <a href="tel:+14196543584">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+        419.654.3584
+      </a>
+      <a href="tel:+15676866265">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+        567.686.6265
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- =================== STICKY NAV =================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand-mini" href="#top">
+      <span class="dot"></span>
+      Glass City
+    </a>
+    <div class="nav-links">
+      <a href="#fleet">Fleet</a>
+      <a href="#quote">Get Quote</a>
+      <a href="#service">Service Area</a>
+      <a href="#contact">Contact</a>
+      <a class="nav-cta" href="#quote">
+        Build a Quote
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- =================== HERO =================== -->
+<header id="top" class="hero">
+  <div class="hero-bg">
+    <img src="images/trailer-gooseneck-snow.jpg" alt="Glass City Trailer Rentals dump trailer on the job" />
+  </div>
+  <div class="hero-content">
+    <div class="reveal" style="transition-delay:.05s;">
+      <div class="eyebrow">EST. TOLEDO · 2004 Front Street · 43605</div>
+      <h1 class="display">
+        Haul<br/>
+        <span class="accent">whatever</span><br/>
+        <span class="stroke">the job</span><br/>
+        needs.
+      </h1>
+      <p class="hero-tag">
+        <strong>Car haulers · Dump trailers · Enclosed cargo · Utility trailers · 25-yard roll-offs.</strong>
+        Rent by the hour, day, week, or month. Locally owned in Toledo — serving Oregon, Perrysburg,
+        Bowling Green &amp; Southeast Michigan.
+      </p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#quote">
+          Build a Quote
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="tel:+14196543584">Call (419) 654-3584</a>
+      </div>
+    </div>
+
+    <aside class="reveal" style="transition-delay:.25s;">
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-lbl">Recommend</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">5★</div>
+          <div class="stat-lbl">Reviews</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">5+</div>
+          <div class="stat-lbl">Trailer Types</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</header>
+
+<!-- =================== TICKER =================== -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>By the Hour</span><span class="dot"></span>
+    <span>By the Day</span><span class="dot"></span>
+    <span>By the Week</span><span class="dot"></span>
+    <span>By the Month</span><span class="dot"></span>
+    <span>Toledo · Oregon · Perrysburg · Bowling Green · Michigan</span><span class="dot"></span>
+    <span>25-Yard Roll-Offs Available</span><span class="dot"></span>
+    <span>By the Hour</span><span class="dot"></span>
+    <span>By the Day</span><span class="dot"></span>
+    <span>By the Week</span><span class="dot"></span>
+    <span>By the Month</span><span class="dot"></span>
+    <span>Toledo · Oregon · Perrysburg · Bowling Green · Michigan</span><span class="dot"></span>
+    <span>25-Yard Roll-Offs Available</span><span class="dot"></span>
+  </div>
+</div>
+
+<!-- =================== FLEET =================== -->
+<section id="fleet">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <div class="eyebrow">01 — Fleet</div>
+        <h2 class="display">The Fleet</h2>
+      </div>
+      <p>Tow-ready trailers for movers, contractors, DIYers and project clean-outs. Tap any unit to drop it into your quote.</p>
+    </div>
+
+    <div class="fleet">
+
+      <!-- 1. CAR HAULER -->
+      <article class="trailer reveal" data-trailer="car-hauler">
+        <div class="trailer-photo">
+          <img src="images/trailer-car-hauler.jpg" alt="7x20 Car Hauler / Equipment Trailer" loading="lazy" />
+          <span class="trailer-tag">01 · Equipment</span>
+          <span class="trailer-size">7×20 ft</span>
+        </div>
+        <div class="trailer-body">
+          <h3>Car Hauler<br/>Equipment Trailer</h3>
+          <ul class="trailer-specs">
+            <li>Winch</li>
+            <li>Power Tilt</li>
+            <li>Straps + Axle Straps</li>
+            <li>Removable Fenders</li>
+            <li>Spare Tire</li>
+            <li>Adj. Drop Hitch</li>
+          </ul>
+          <div class="price-grid">
+            <div class="price-cell"><div class="amt">$25</div><div class="per">/hr</div></div>
+            <div class="price-cell"><div class="amt">$120</div><div class="per">/day</div></div>
+            <div class="price-cell"><div class="amt">$600</div><div class="per">/week</div></div>
+            <div class="price-cell"><div class="amt">$1800</div><div class="per">/month</div></div>
+          </div>
+          <div class="trailer-foot">
+            <p class="reqs">
+              <strong>2 5/16″ ball</strong> · 7-pin plug<br/>
+              2 hr minimum
+            </p>
+            <button class="quote-btn" data-load="car-hauler">→ Quote This</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. ENCLOSED -->
+      <article class="trailer reveal" data-trailer="enclosed">
+        <div class="trailer-photo">
+          <img src="images/trailer-enclosed.jpg" alt="6x12 Enclosed Cargo Trailer with Glass City logo" loading="lazy" />
+          <span class="trailer-tag">02 · Enclosed</span>
+          <span class="trailer-size">6×12 ft</span>
+        </div>
+        <div class="trailer-body">
+          <h3>Enclosed<br/>Cargo Trailer</h3>
+          <ul class="trailer-specs">
+            <li>Drop Gate</li>
+            <li>Side Door</li>
+            <li>Straps</li>
+            <li>Spare Tire</li>
+          </ul>
+          <div class="price-grid">
+            <div class="price-cell"><div class="amt">$20</div><div class="per">/hr</div></div>
+            <div class="price-cell"><div class="amt">$75</div><div class="per">/day</div></div>
+            <div class="price-cell"><div class="amt">$350</div><div class="per">/week</div></div>
+            <div class="price-cell"><div class="amt">$1100</div><div class="per">/month</div></div>
+          </div>
+          <div class="trailer-foot">
+            <p class="reqs">
+              <strong>2″ ball</strong> · 4-pin plug<br/>
+              2 hr minimum
+            </p>
+            <button class="quote-btn" data-load="enclosed">→ Quote This</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- 3. DUMP -->
+      <article class="trailer reveal" data-trailer="dump">
+        <div class="trailer-photo">
+          <img src="images/trailer-dump.jpg" alt="7x16x4 Dump Trailer 17 Yarder Equipment Hauler" loading="lazy" />
+          <span class="trailer-tag">03 · 17 Yarder</span>
+          <span class="trailer-size">7×16×4 ft</span>
+        </div>
+        <div class="trailer-body">
+          <h3>Dump Trailer<br/>Equipment Hauler</h3>
+          <ul class="trailer-specs">
+            <li>Electric Dump</li>
+            <li>Ramps</li>
+            <li>Net</li>
+            <li>Spare Tire</li>
+            <li>17 yd Capacity</li>
+            <li>Adj. Drop Hitch</li>
+          </ul>
+          <div class="price-grid">
+            <div class="price-cell"><div class="amt">$30</div><div class="per">/hr</div></div>
+            <div class="price-cell"><div class="amt">$150</div><div class="per">/day</div></div>
+            <div class="price-cell"><div class="amt">$650</div><div class="per">/week</div></div>
+            <div class="price-cell"><div class="amt">$1950</div><div class="per">/month</div></div>
+          </div>
+          <p class="trailer-extra-note">
+            Drop-Off Option: $350 at drop off (3 days included) · $25/day after 3 days
+          </p>
+          <div class="trailer-foot">
+            <p class="reqs">
+              <strong>2 5/16″ ball</strong><br/>7-pin plug
+            </p>
+            <button class="quote-btn" data-load="dump">→ Quote This</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- 4. UTILITY -->
+      <article class="trailer reveal" data-trailer="utility">
+        <div class="trailer-photo">
+          <img src="images/trailer-utility.jpg" alt="6x12 Utility Trailer with ramp gate" loading="lazy" />
+          <span class="trailer-tag">04 · Utility</span>
+          <span class="trailer-size">6×12 ft</span>
+        </div>
+        <div class="trailer-body">
+          <h3>Utility<br/>Open Trailer</h3>
+          <ul class="trailer-specs">
+            <li>Ramp Gate</li>
+            <li>Straps</li>
+            <li>Spare Tire</li>
+          </ul>
+          <div class="price-grid">
+            <div class="price-cell na"><div class="amt">—</div><div class="per">/hr</div></div>
+            <div class="price-cell"><div class="amt">$50</div><div class="per">/day</div></div>
+            <div class="price-cell"><div class="amt">$250</div><div class="per">/week</div></div>
+            <div class="price-cell"><div class="amt">$750</div><div class="per">/month</div></div>
+          </div>
+          <div class="trailer-foot">
+            <p class="reqs">
+              <strong>2″ ball</strong><br/>4-pin plug
+            </p>
+            <button class="quote-btn" data-load="utility">→ Quote This</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- 25-YARD ROLL-OFF FEATURE -->
+    <article class="feature-25 reveal" data-trailer="roll25">
+      <div class="feature-25-photo">
+        <img src="images/trailer-25yard.jpg" alt="25-yard roll-off dumpster" loading="lazy" />
+      </div>
+      <div class="feature-25-body">
+        <span class="badge">NEW · 25 YARDER</span>
+        <h3>25-Yard<br/>Roll-Off Bin</h3>
+        <p class="dim" style="margin:0; font-size:14px; max-width:480px;">
+          Perfect for renovations, roof tear-offs, garage cleanouts and big project debris.
+          We drop it, you fill it, we haul it.
+        </p>
+        <div class="feature-25-pricing">
+          <div>
+            <div class="amt">$420</div>
+            <div class="lbl">Drop-off<br/>(3 days incl.)</div>
+          </div>
+          <div>
+            <div class="amt">$25</div>
+            <div class="lbl">Per day after<br/>3 days</div>
+          </div>
+          <div>
+            <div class="amt">$3</div>
+            <div class="lbl">Per tire<br/>(see below)</div>
+          </div>
+        </div>
+        <p class="feature-25-rules">
+          <span class="warn">⚠ Tires prohibited</span> — $3 each if found.<br/>
+          Drop-off includes pickup. Schedule pickup or drop-off today.
+        </p>
+        <div class="feature-25-cta">
+          <button class="btn btn-primary" data-load="roll25">Quote 25-Yarder →</button>
+          <a class="btn btn-ghost" href="tel:+14196543584">Call to Schedule</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- =================== QUOTE BUILDER =================== -->
+<section id="quote">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <div class="eyebrow">02 — Estimate</div>
+        <h2 class="display">Build Your Quote</h2>
+      </div>
+      <p>Pick a trailer, set the duration, and we'll calculate a live estimate. Send it and we'll confirm by phone or email.</p>
+    </div>
+
+    <div class="quote-grid">
+      <!-- Form -->
+      <form class="quote-form reveal" id="quoteForm" novalidate>
+        <div class="field">
+          <label class="field-lbl">Step 1 — Select Trailer <span class="req">*</span></label>
+          <div class="trailer-picker" id="trailerPicker"></div>
+        </div>
+
+        <div class="field" id="periodField">
+          <label class="field-lbl">Step 2 — Rental Period</label>
+          <div class="seg" id="periodSeg">
+            <input type="radio" name="period" id="p-hour" value="hour" checked />
+            <label for="p-hour">Hour</label>
+            <input type="radio" name="period" id="p-day" value="day" />
+            <label for="p-day">Day</label>
+            <input type="radio" name="period" id="p-week" value="week" />
+            <label for="p-week">Week</label>
+            <input type="radio" name="period" id="p-month" value="month" />
+            <label for="p-month">Month</label>
+          </div>
+        </div>
+
+        <div class="field" id="qtyField">
+          <label class="field-lbl" id="qtyLabel">Step 3 — How Many Hours? (2 hr minimum)</label>
+          <input type="number" id="qty" min="1" value="2" />
+        </div>
+
+        <!-- 25-Yarder special inputs (shown only when roll25 selected) -->
+        <div class="field" id="roll25Fields" style="display:none;">
+          <label class="field-lbl">Step 2 — Extra Days Beyond 3 Included</label>
+          <input type="number" id="extraDays" min="0" value="0" placeholder="0 = just 3-day drop-off" />
+          <label class="field-lbl" style="margin-top:18px;">Tires (if any)</label>
+          <input type="number" id="tireCount" min="0" value="0" />
+          <p class="qs-note" style="margin-top:8px;">Tires are prohibited but charged at $3 each if found in the bin.</p>
+        </div>
+
+        <div class="field">
+          <label class="field-lbl">Your Info <span class="req">*</span></label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <input type="text" id="qName" placeholder="Full name" required />
+            <input type="tel" id="qPhone" placeholder="Phone" required />
+          </div>
+          <input type="email" id="qEmail" placeholder="Email (optional)" style="margin-top:12px;" />
+        </div>
+
+        <div class="field">
+          <label class="field-lbl">Pickup Date & Notes</label>
+          <textarea id="qNotes" placeholder="When do you need it? Any questions about the trailer, hitch, or delivery?"></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="sendQuote" type="button">
+          Send My Quote Request
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <p class="qs-note" style="text-align:center; margin-top:14px;">
+          Opens your email app pre-filled — or call (419) 654-3584
+        </p>
+      </form>
+
+      <!-- Live summary -->
+      <aside class="quote-summary reveal">
+        <div class="qs-head">
+          <div>
+            <div class="eyebrow">Live Estimate</div>
+            <div style="font-family:'Anton',sans-serif; font-size:22px; margin-top:6px; text-transform:uppercase;">Quote Builder</div>
+          </div>
+          <div class="qs-id" id="qsId">#GCT-0000</div>
+        </div>
+
+        <div class="qs-row"><span>Trailer</span><span id="qsTrailer">—</span></div>
+        <div class="qs-row"><span>Period</span><span id="qsPeriod">—</span></div>
+        <div class="qs-row"><span>Quantity</span><span id="qsQty">—</span></div>
+        <div class="qs-row"><span>Rate</span><span id="qsRate">—</span></div>
+        <div class="qs-row" id="qsMinRow" style="display:none;"><span>2-hr Minimum</span><span>Applied</span></div>
+        <div class="qs-row" id="qsTiresRow" style="display:none;"><span>Tires</span><span id="qsTires">—</span></div>
+
+        <div class="qs-total">
+          <span class="lbl">Estimate</span>
+          <span class="val" id="qsTotal">$0</span>
+        </div>
+
+        <p class="qs-note">
+          Estimate only. Final price may vary based on hitch, deposit, fuel, and add-ons. A team member will confirm by phone before your pickup.
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- =================== SERVICE AREA =================== -->
+<section id="service">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <div class="eyebrow">03 — Coverage</div>
+        <h2 class="display">Where We Serve</h2>
+      </div>
+      <p>Pick up from our Toledo lot at 2004 Front Street, or ask about local delivery to your job site.</p>
+    </div>
+
+    <div class="service">
+      <div class="cities reveal">
+        <div><span>Toledo, OH</span><span class="miles">HQ · 43605</span></div>
+        <div><span>Oregon, OH</span><span class="miles">~5 mi</span></div>
+        <div><span>Perrysburg, OH</span><span class="miles">~10 mi</span></div>
+        <div><span>Bowling Green, OH</span><span class="miles">~24 mi</span></div>
+        <div><span>SE Michigan</span><span class="miles">Monroe Co.</span></div>
+        <div><span>Custom Drop-Off</span><span class="miles">Call</span></div>
+      </div>
+
+      <div class="service-pic reveal">
+        <span class="service-callout">HQ · 2004 Front St</span>
+        <svg viewBox="0 0 300 220" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="150" cy="110" r="80" stroke-dasharray="2 4" opacity=".4"/>
+          <circle cx="150" cy="110" r="50" stroke-dasharray="2 4" opacity=".5"/>
+          <circle cx="150" cy="110" r="20" stroke-dasharray="2 4" opacity=".6"/>
+          <line x1="150" y1="10" x2="150" y2="210" stroke-dasharray="3 5" opacity=".3"/>
+          <line x1="40" y1="110" x2="260" y2="110" stroke-dasharray="3 5" opacity=".3"/>
+          <circle cx="150" cy="110" r="4" fill="currentColor"/>
+          <circle cx="150" cy="110" r="9"/>
+          <g font-family="JetBrains Mono" font-size="9" fill="currentColor" stroke="none">
+            <text x="158" y="106">TOLEDO · HQ</text>
+            <circle cx="180" cy="130" r="2.5"/>
+            <text x="186" y="134">OREGON</text>
+            <circle cx="120" cy="135" r="2.5"/>
+            <text x="68" y="139">PERRYSBURG</text>
+            <circle cx="115" cy="170" r="2.5"/>
+            <text x="42" y="174">BOWLING GREEN</text>
+            <circle cx="140" cy="60" r="2.5"/>
+            <text x="100" y="54">SE MICHIGAN</text>
+          </g>
+          <g transform="translate(260,25)" font-family="JetBrains Mono" font-size="9" fill="currentColor" stroke="none">
+            <text x="0" y="0">N</text>
+            <path d="M5 4 L9 16 L1 16 Z" stroke="currentColor" fill="currentColor"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CONTACT =================== -->
+<section id="contact">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <div class="eyebrow">04 — Reach Us</div>
+        <h2 class="display">Get In Touch</h2>
+      </div>
+      <p>Call for fastest service. Or send us a message and we'll get right back to you.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <dl>
+          <dt>Phone</dt>
+          <dd><a href="tel:+14196543584">(419) 654-3584</a></dd>
+          <dd><a href="tel:+15676866265">(567) 686-6265</a></dd>
+
+          <dt>Email</dt>
+          <dd class="small"><a href="mailto:glasscitytrailerrentals@gmail.com">glasscitytrailerrentals@gmail.com</a></dd>
+
+          <dt>Address</dt>
+          <dd class="small">2004 Front Street<br/>Toledo, OH 43605</dd>
+
+          <dt>Hours</dt>
+          <dd class="small">Open Now · Call for availability</dd>
+        </dl>
+      </div>
+
+      <form id="contactForm" class="quote-form reveal" novalidate>
+        <div class="field">
+          <label class="field-lbl">Name <span class="req">*</span></label>
+          <input type="text" id="cName" required />
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+          <div class="field">
+            <label class="field-lbl">Email</label>
+            <input type="email" id="cEmail" />
+          </div>
+          <div class="field">
+            <label class="field-lbl">Phone <span class="req">*</span></label>
+            <input type="tel" id="cPhone" required />
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Message <span class="req">*</span></label>
+          <textarea id="cMsg" placeholder="Which trailer are you interested in? When do you need it?" required></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" id="sendContact" type="button">
+          Send Message
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        </button>
+        <div class="form-status" id="contactStatus"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- =================== FOOTER =================== -->
+<footer>
+  <div class="container">
+    <div class="foot-tag reveal">
+      Toledo built.<br/>
+      <span class="accent">Built to haul.</span>
+    </div>
+
+    <div class="foot-top">
+      <div>
+        <h5>Glass City Trailer Rentals LLC</h5>
+        <p class="dim" style="font-size:14px; max-width:360px; margin: 0;">
+          Locally owned and operated out of Toledo, Ohio. Trailers and dumpsters for every job —
+          hourly, daily, weekly, monthly.
+        </p>
+        <div class="foot-logo">
+          <img src="images/logo.png" alt="Glass City Trailer Rentals" />
+        </div>
+      </div>
+      <div>
+        <h5>Fleet</h5>
+        <a href="#fleet">7×20 Car Hauler</a>
+        <a href="#fleet">6×12 Enclosed Cargo</a>
+        <a href="#fleet">17 yd Dump Trailer</a>
+        <a href="#fleet">6×12 Utility Trailer</a>
+        <a href="#fleet">25 yd Roll-Off Bin</a>
+      </div>
+      <div>
+        <h5>Contact</h5>
+        <a href="tel:+14196543584">(419) 654-3584</a>
+        <a href="tel:+15676866265">(567) 686-6265</a>
+        <a href="mailto:glasscitytrailerrentals@gmail.com">glasscitytrailerrentals@gmail.com</a>
+        <a href="https://maps.google.com/?q=2004+Front+St+Toledo+OH+43605" target="_blank" rel="noopener">2004 Front St, Toledo, OH</a>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <span>© <span id="yr"></span> Glass City Trailer Rentals LLC</span>
+      <span>Toledo · OH · 43605</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast">Quote prepared — opening your email</div>
+
+<script>
+  // ---------- Fleet data ----------
+  const FLEET = {
+    'car-hauler': {
+      name: '7×20 Car Hauler / Equipment',
+      photo: 'images/trailer-car-hauler.jpg',
+      hour: 25, day: 120, week: 600, month: 1800,
+      reqs: '2 5/16" ball · 7-pin plug',
+      minHours: 2
+    },
+    'enclosed': {
+      name: '6×12 Enclosed Cargo',
+      photo: 'images/trailer-enclosed.jpg',
+      hour: 20, day: 75, week: 350, month: 1100,
+      reqs: '2" ball · 4-pin plug',
+      minHours: 2
+    },
+    'dump': {
+      name: '7×16×4 Dump Trailer (17 yd)',
+      photo: 'images/trailer-dump.jpg',
+      hour: 30, day: 150, week: 650, month: 1950,
+      reqs: '2 5/16" ball · 7-pin plug',
+      minHours: 2
+    },
+    'utility': {
+      name: '6×12 Utility Trailer',
+      photo: 'images/trailer-utility.jpg',
+      hour: null, day: 50, week: 250, month: 750,
+      reqs: '2" ball · 4-pin plug',
+      minHours: null
+    },
+    'roll25': {
+      name: '25-Yard Roll-Off Bin',
+      photo: 'images/trailer-25yard.jpg',
+      special: true,
+      basePrice: 420,
+      daysIncluded: 3,
+      extraDayRate: 25,
+      tireRate: 3,
+      reqs: 'Drop-off & pickup included',
+      minHours: null
+    }
+  };
+
+  const state = {
+    trailer: 'car-hauler',
+    period: 'hour',
+    qty: 2,
+    extraDays: 0,
+    tires: 0
+  };
+
+  // ---------- Build trailer picker ----------
+  const picker = document.getElementById('trailerPicker');
+  Object.entries(FLEET).forEach(([key, t]) => {
+    let rate, sub;
+    if (t.special) {
+      rate = '$' + t.basePrice + ' drop';
+      sub = '3 days incl. · $25/extra day';
+    } else {
+      rate = t.hour ? '$' + t.hour + '/hr'
+            : t.day ? '$' + t.day + '/day'
+            : '$' + t.week + '/wk';
+      sub = [t.hour && '$'+t.hour+'/hr', t.day && '$'+t.day+'/day', t.week && '$'+t.week+'/wk', t.month && '$'+t.month+'/mo']
+            .filter(Boolean).join(' · ');
+    }
+    const el = document.createElement('div');
+    el.className = 'trailer-opt' + (key === state.trailer ? ' selected' : '');
+    el.dataset.key = key;
+    el.innerHTML = `
+      <div class="trailer-opt-thumb"><img src="${t.photo}" alt="${t.name}" loading="lazy" /></div>
+      <div>
+        <div class="opt-name">${t.name}</div>
+        <div class="opt-sub">${sub}</div>
+      </div>
+      <div class="opt-rate">${rate}</div>
+    `;
+    el.addEventListener('click', () => selectTrailer(key));
+    picker.appendChild(el);
+  });
+
+  function selectTrailer(key) {
+    state.trailer = key;
+    document.querySelectorAll('.trailer-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.key === key);
+    });
+    const t = FLEET[key];
+
+    // Toggle special UI for roll25
+    const isSpecial = !!t.special;
+    document.getElementById('periodField').style.display = isSpecial ? 'none' : '';
+    document.getElementById('qtyField').style.display = isSpecial ? 'none' : '';
+    document.getElementById('roll25Fields').style.display = isSpecial ? '' : 'none';
+    document.getElementById('qsTiresRow').style.display = isSpecial ? '' : 'none';
+
+    if (!isSpecial) {
+      // Update period radio availability
+      ['hour','day','week','month'].forEach(p => {
+        const r = document.getElementById('p-'+p);
+        r.disabled = (t[p] == null);
+      });
+      // If current period is disabled, pick first available
+      if (t[state.period] == null) {
+        const fallback = ['hour','day','week','month'].find(p => t[p] != null);
+        if (fallback) {
+          state.period = fallback;
+          document.getElementById('p-'+fallback).checked = true;
+        }
+      }
+      syncMinQty();
+    }
+    updateQuote();
+  }
+
+  document.querySelectorAll('input[name="period"]').forEach(r => {
+    r.addEventListener('change', () => {
+      state.period = r.value;
+      syncMinQty();
+      updateQuote();
+    });
+  });
+
+  function syncMinQty() {
+    const lbl = document.getElementById('qtyLabel');
+    const qty = document.getElementById('qty');
+    if (state.period === 'hour') {
+      lbl.textContent = 'Step 3 — How Many Hours? (2 hr minimum)';
+      if (qty.value < 2) qty.value = 2;
+    } else if (state.period === 'day') {
+      lbl.textContent = 'Step 3 — How Many Days?';
+      if (qty.value < 1) qty.value = 1;
+    } else if (state.period === 'week') {
+      lbl.textContent = 'Step 3 — How Many Weeks?';
+      if (qty.value < 1) qty.value = 1;
+    } else {
+      lbl.textContent = 'Step 3 — How Many Months?';
+      if (qty.value < 1) qty.value = 1;
+    }
+    state.qty = parseFloat(qty.value) || 1;
+  }
+
+  document.getElementById('qty').addEventListener('input', e => {
+    state.qty = parseFloat(e.target.value) || 0;
+    updateQuote();
+  });
+  document.getElementById('extraDays').addEventListener('input', e => {
+    state.extraDays = parseInt(e.target.value) || 0;
+    updateQuote();
+  });
+  document.getElementById('tireCount').addEventListener('input', e => {
+    state.tires = parseInt(e.target.value) || 0;
+    updateQuote();
+  });
+
+  function calcQuote() {
+    const t = FLEET[state.trailer];
+    if (t.special) {
+      const base = t.basePrice;
+      const extraCost = state.extraDays * t.extraDayRate;
+      const tireCost = state.tires * t.tireRate;
+      return {
+        rate: t.basePrice,
+        qty: 3 + state.extraDays,
+        total: base + extraCost + tireCost,
+        minApplied: false,
+        special: true,
+        extraDays: state.extraDays,
+        tires: state.tires,
+        tireCost
+      };
+    }
+    const rate = t[state.period];
+    if (!rate) return { rate: null, qty: state.qty, total: null, minApplied: false };
+    let qty = state.qty;
+    let minApplied = false;
+    if (state.period === 'hour' && qty < 2) { qty = 2; minApplied = true; }
+    return { rate, qty, total: rate * qty, minApplied };
+  }
+
+  function updateQuote() {
+    const t = FLEET[state.trailer];
+    const q = calcQuote();
+
+    document.getElementById('qsTrailer').textContent = t.name;
+
+    if (q.special) {
+      document.getElementById('qsPeriod').textContent = 'Roll-Off Drop-Off';
+      document.getElementById('qsQty').textContent = q.qty + ' day' + (q.qty === 1 ? '' : 's') + ' total';
+      document.getElementById('qsRate').textContent = '$' + t.basePrice + ' + $' + t.extraDayRate + '/extra day';
+      document.getElementById('qsTires').textContent = q.tires > 0 ? q.tires + ' × $3 = $' + q.tireCost : 'None';
+      document.getElementById('qsMinRow').style.display = 'none';
+    } else {
+      document.getElementById('qsPeriod').textContent = state.period === 'hour' ? 'Hourly' : state.period === 'day' ? 'Daily' : state.period === 'week' ? 'Weekly' : 'Monthly';
+      const unit = state.period === 'hour' ? 'hr' : state.period === 'day' ? 'day' : state.period === 'week' ? 'wk' : 'mo';
+      document.getElementById('qsQty').textContent = q.qty + ' ' + unit + (q.qty === 1 ? '' : 's');
+      document.getElementById('qsRate').textContent = q.rate ? '$' + q.rate + ' / ' + state.period : 'Call';
+      document.getElementById('qsMinRow').style.display = q.minApplied ? '' : 'none';
+    }
+
+    document.getElementById('qsTotal').textContent = q.total != null ? '$' + q.total.toFixed(0) : 'Call';
+
+    const fleetKeys = Object.keys(FLEET);
+    const idNum = ((fleetKeys.indexOf(state.trailer)+1) * 1000) + Math.round((q.total || 0));
+    document.getElementById('qsId').textContent = '#GCT-' + idNum.toString().padStart(4, '0');
+  }
+
+  // Init
+  selectTrailer(state.trailer);
+
+  // ---------- Trailer card "Quote This" buttons ----------
+  document.querySelectorAll('[data-load]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const key = btn.dataset.load;
+      selectTrailer(key);
+      document.getElementById('quote').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // ---------- Submit quote (mailto) ----------
+  const BUSINESS_EMAIL = 'glasscitytrailerrentals@gmail.com';
+
+  document.getElementById('sendQuote').addEventListener('click', () => {
+    const name = document.getElementById('qName').value.trim();
+    const phone = document.getElementById('qPhone').value.trim();
+    const email = document.getElementById('qEmail').value.trim();
+    const notes = document.getElementById('qNotes').value.trim();
+    if (!name || !phone) {
+      showToast('Please add your name and phone first');
+      return;
+    }
+    const q = calcQuote();
+    const t = FLEET[state.trailer];
+    const subj = encodeURIComponent('Quote Request: ' + t.name + ' — ' + name);
+
+    let bodyLines = [
+      'QUOTE REQUEST · ' + document.getElementById('qsId').textContent,
+      '────────────────────────────────────',
+      'Trailer:  ' + t.name
+    ];
+
+    if (q.special) {
+      bodyLines.push('Period:   Roll-Off Drop-Off');
+      bodyLines.push('Days:     ' + q.qty + ' day' + (q.qty === 1 ? '' : 's') + ' (3 included + ' + state.extraDays + ' extra)');
+      bodyLines.push('Base:     $' + t.basePrice);
+      if (state.extraDays > 0) bodyLines.push('Extra:    ' + state.extraDays + ' × $' + t.extraDayRate + ' = $' + (state.extraDays * t.extraDayRate));
+      if (state.tires > 0) bodyLines.push('Tires:    ' + state.tires + ' × $' + t.tireRate + ' = $' + q.tireCost);
+      bodyLines.push('Estimate: $' + q.total);
+    } else {
+      bodyLines.push('Period:   ' + (state.period === 'hour' ? 'Hourly' : state.period === 'day' ? 'Daily' : state.period === 'week' ? 'Weekly' : 'Monthly'));
+      bodyLines.push('Quantity: ' + q.qty + ' ' + state.period + (q.qty === 1 ? '' : 's'));
+      bodyLines.push('Rate:     ' + (q.rate ? '$' + q.rate + ' / ' + state.period : 'Call'));
+      bodyLines.push('Estimate: ' + (q.total != null ? '$' + q.total : 'Call'));
+    }
+
+    bodyLines.push('────────────────────────────────────');
+    bodyLines.push('Name:  ' + name);
+    bodyLines.push('Phone: ' + phone);
+    bodyLines.push('Email: ' + (email || '—'));
+    bodyLines.push('');
+    bodyLines.push('Notes / Pickup Date:');
+    bodyLines.push(notes || '—');
+    bodyLines.push('');
+    bodyLines.push('Requirements: ' + t.reqs);
+
+    const body = encodeURIComponent(bodyLines.join('\n'));
+    window.location.href = 'mailto:' + BUSINESS_EMAIL + '?subject=' + subj + '&body=' + body;
+    showToast('Quote prepared — opening your email');
+  });
+
+  // ---------- Contact form (mailto) ----------
+  document.getElementById('sendContact').addEventListener('click', () => {
+    const name = document.getElementById('cName').value.trim();
+    const phone = document.getElementById('cPhone').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const msg = document.getElementById('cMsg').value.trim();
+    const status = document.getElementById('contactStatus');
+    if (!name || !phone || !msg) {
+      status.style.color = 'var(--danger)';
+      status.textContent = '> Please fill out name, phone, and message.';
+      return;
+    }
+    status.style.color = 'var(--green)';
+    status.textContent = '> Opening your email app…';
+    const subj = encodeURIComponent('Website Inquiry — ' + name);
+    const body = encodeURIComponent(
+      'Name:  ' + name + '\n' +
+      'Phone: ' + phone + '\n' +
+      'Email: ' + (email || '—') + '\n\n' +
+      'Message:\n' + msg
+    );
+    window.location.href = 'mailto:' + BUSINESS_EMAIL + '?subject=' + subj + '&body=' + body;
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // ---------- Reveal on scroll ----------
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '-50px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  document.getElementById('yr').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

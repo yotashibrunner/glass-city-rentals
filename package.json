@@ -1,0 +1,26 @@
+{
+  "name": "glass-city-rentals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Glass City Trailer Rentals — booking + payment + e-signed contract platform",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "migrate": "node-pg-migrate -j sql -m server/migrations",
+    "migrate:up": "node-pg-migrate -j sql -m server/migrations up",
+    "migrate:down": "node-pg-migrate -j sql -m server/migrations down",
+    "seed": "node scripts/seed-trailers.js",
+    "create-admin": "node scripts/create-admin.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "node-pg-migrate": "^8.0.4",
+    "pg": "^8.13.1"
+  }
+}

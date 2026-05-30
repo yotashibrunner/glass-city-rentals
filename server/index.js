@@ -1,0 +1,62 @@
+'use strict';
+
+const path = require('path');
+const express = require('express');
+const config = require('./config');
+
+const app = express();
+
+// Railway terminates TLS at its edge proxy; trust it so req.ip / secure
+// cookies behave correctly behind the proxy.
+app.set('trust proxy', 1);
+
+// EJS server-rendered pages live in server/views.
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// --- Health check (Phase 0 acceptance) ---
+app.get('/health', (req, res) => {
+  res.json({ ok: true });
+});
+
+// --- Server-rendered booking pages (stubbed in Phase 1) ---
+// Real trailer detail page arrives in Phase 4. For now return a 200
+// placeholder so links resolve and the route table is in place.
+app.get('/fleet/:slug', (req, res) => {
+  res.status(200).render('fleet-detail', { slug: req.params.slug });
+});
+
+// --- Static marketing site, served at / ---
+// Placed after explicit routes so /health and /fleet/* win. index.html is the
+// directory index, so GET / serves the existing marketing page unchanged.
+const publicDir = path.join(__dirname, '..', 'public');
+app.use(express.static(publicDir));
+
+// --- 404 ---
+app.use((req, res) => {
+  res.status(404).send('Not Found');
+});
+
+// --- Centralized error handler ---
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[error]', err);
+  res.status(err.status || 500).json({ error: 'Internal Server Error' });
+});
+
+const server = app.listen(config.port, () => {
+  console.log(`Glass City Rentals listening on :${config.port} (${config.env})`);
+});
+
+// Graceful shutdown so Railway redeploys don't drop in-flight requests.
+function shutdown(signal) {
+  console.log(`${signal} received, shutting down`);
+  server.close(() => process.exit(0));
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+module.exports = app;
