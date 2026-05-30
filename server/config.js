@@ -28,8 +28,26 @@ const config = {
   // Public base URL of the site, used for building absolute links (Stripe
   // redirect URLs, email links, .ics, etc.). Filled in from Phase 5 onward.
   baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+
+  // ── Auth (Phase 2) ──────────────────────────────────────────────────
+  // Secret used to sign operator JWTs. MUST be set in production; in dev we
+  // fall back to a fixed string so the app boots, but tokens won't survive a
+  // restart-with-real-secret and are not secure.
+  jwtSecret: required('JWT_SECRET', process.env.JWT_SECRET) || 'dev-insecure-jwt-secret-change-me',
+  // Short-lived access token; sent on every API call.
+  accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '15m',
+  // Long-lived refresh token; used to mint new access tokens.
+  refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || '30d',
+  // bcrypt cost factor for password hashing (plan §13: 12 rounds).
+  bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
 };
 
 config.isProduction = config.env === 'production';
+
+// Never run production auth on the insecure dev fallback secret — fail loudly
+// at boot rather than silently issuing forgeable tokens.
+if (config.isProduction && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set in production');
+}
 
 module.exports = config;

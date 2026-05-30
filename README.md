@@ -5,9 +5,9 @@ site and an operator PWA. Single Express app, single Postgres database, deployed
 to Railway. See [`../PLAN.md`](../PLAN.md) for the full architecture and phased
 build plan.
 
-> **Status:** Phase 0 (project setup) + Phase 1 (database + existing site)
-> complete. The marketing site is served at `/`; the booking flow, operator PWA,
-> payments, and contracts arrive in later phases.
+> **Status:** Phases 0–2 complete. The marketing site is served at `/`, and the
+> operator PWA (with JWT login) is at `/operator/`. The booking flow, payments,
+> and contracts arrive in later phases.
 
 ## Stack
 
@@ -20,14 +20,32 @@ build plan.
 
 ```
 server/
-  index.js          Express entrypoint (/health, /fleet/:slug stub, static site)
-  config.js         Env config
+  index.js          Express entrypoint (health, API mounts, static + PWA, fleet stub)
+  config.js         Env config (DB, JWT)
   db.js             pg connection pool
   migrations/       node-pg-migrate SQL migrations
+  routes/
+    auth.js         POST /api/auth/login, /api/auth/refresh
+    api-operator.js Operator API (JWT-protected): /me, /dashboard (empty in P2)
+  middleware/
+    auth.js         JWT verification guard for /api/operator/*
+    rate-limit.js   In-memory fixed-window limiter (login: 5/min/IP)
+  services/
+    auth.js         bcrypt password hashing + JWT issue/verify
   views/            EJS templates
 public/             Static marketing site (index.html + images), served at /
+operator/           Operator PWA (vanilla SPA), served at /operator/
+  index.html        App shell (login + dashboard views via <template>)
+  manifest.json     PWA manifest (installable)
+  service-worker.js Offline shell cache (API never cached)
+  icons/            App icons (192, 512, 180 — generated from logo)
+  css/app.css       Mobile-first dark theme
+  js/api.js         JWT storage + auto-refresh fetch wrapper
+  js/app.js         View controller + service-worker registration
 scripts/
   seed-trailers.js  Seeds the 5 fleet items with current pricing
+  create-admin.js   CLI to create/update an operator login
+  generate-icons.js Regenerates PWA icons from public/images/logo.png
 ```
 
 ## Local setup
@@ -71,9 +89,39 @@ scripts/
 
 ## Environment variables
 
-See [`.env.example`](.env.example) for the full list. Phase 0/1 only needs
-`PORT`, `DATABASE_URL`, and `DB_SSL`. Later phases add Stripe, Resend, Twilio,
-VAPID, and Sentry keys.
+See [`.env.example`](.env.example) for the full list. Phase 0/1 needs `PORT`,
+`DATABASE_URL`, and `DB_SSL`. Phase 2 adds **`JWT_SECRET`** — required in
+production (the app refuses to boot without it). Generate one with:
+
+```sh
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+Later phases add Stripe, Resend, Twilio, VAPID, and Sentry keys.
+
+## Operator PWA
+
+The operator app is a vanilla single-page PWA at `/operator/`, installable to a
+phone home screen ("Add to Home Screen" on Android & iOS).
+
+1. **Create the first operator login:**
+
+   ```sh
+   npm run create-admin -- --email you@example.com --name "Your Name" --role admin
+   ```
+
+   Omit `--password` to be prompted (hidden input). Re-running with the same
+   email updates that account, so it doubles as a password reset.
+
+2. **Log in:** open `/operator` on your phone, install to the home screen, and
+   sign in. Auth uses bcrypt + JWT (15-minute access token, 30-day refresh
+   stored in `localStorage`; the access token auto-refreshes on expiry).
+
+3. **Regenerate PWA icons** (after changing `public/images/logo.png`):
+
+   ```sh
+   npm run generate-icons
+   ```
 
 ## Database migrations
 

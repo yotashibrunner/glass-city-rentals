@@ -17,10 +17,39 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const authRoutes = require('./routes/auth');
+const operatorRoutes = require('./routes/api-operator');
+const { requireAuth } = require('./middleware/auth');
+
 // --- Health check (Phase 0 acceptance) ---
 app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
+
+// --- JSON API ---
+// Auth endpoints are public (login/refresh); everything under /api/operator
+// requires a valid access token.
+app.use('/api/auth', authRoutes);
+app.use('/api/operator', requireAuth, operatorRoutes);
+
+// --- Operator PWA (Phase 2) ---
+// Single-page app served from operator/. Mounted before the static marketing
+// site so /operator/* resolves here. express.static serves index.html for both
+// /operator and /operator/. The service worker must be served with no-cache so
+// clients pick up new versions immediately, and its scope is the /operator/
+// subtree (it lives at the root of that path).
+const operatorDir = path.join(__dirname, '..', 'operator');
+app.use(
+  '/operator',
+  express.static(operatorDir, {
+    setHeaders(res, filePath) {
+      if (filePath.endsWith('service-worker.js')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Service-Worker-Allowed', '/operator/');
+      }
+    },
+  })
+);
 
 // --- Server-rendered booking pages (stubbed in Phase 1) ---
 // Real trailer detail page arrives in Phase 4. For now return a 200

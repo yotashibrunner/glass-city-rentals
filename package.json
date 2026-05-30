@@ -14,13 +14,19 @@
     "migrate:up": "node-pg-migrate -j sql -m server/migrations up",
     "migrate:down": "node-pg-migrate -j sql -m server/migrations down",
     "seed": "node scripts/seed-trailers.js",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Glass City Operator</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/operator/manifest.json" />
+  <meta name="theme-color" content="#0f1115" />
+
+  <!-- iOS "Add to Home Screen" support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GC Operator" />
+  <link rel="apple-touch-icon" href="/operator/icons/icon-180.png" />
+
+  <link rel="icon" type="image/png" sizes="192x192" href="/operator/icons/icon-192.png" />
+  <link rel="stylesheet" href="/operator/css/app.css" />
+</head>
+<body>
+  <div id="app" aria-live="polite">
+    <!-- Initial loading state; replaced by app.js once auth is resolved. -->
+    <div class="screen center">
+      <div class="brand">
+        <img src="/operator/icons/icon-192.png" alt="" width="64" height="64" />
+        <p class="muted">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Login view ──────────────────────────────────────────────────── -->
+  <template id="tpl-login">
+    <div class="screen center">
+      <form class="card auth-card" autocomplete="on" novalidate>
+        <div class="brand">
+          <img src="/operator/icons/icon-192.png" alt="Glass City Trailer Rentals" width="72" height="72" />
+          <h1>Operator Login</h1>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="username"
+                 autocapitalize="off" autocorrect="off" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+
+        <p class="error" data-error hidden></p>
+
+        <button type="submit" class="btn btn-primary" data-submit>Log in</button>
+      </form>
+    </div>
+  </template>
+
+  <!-- ── Dashboard view ─────────────────────────────────────────────── -->
+  <template id="tpl-dashboard">
+    <header class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <button type="button" class="btn btn-ghost" data-logout>Log out</button>
+    </header>
+
+    <main class="screen content">
+      <p class="muted welcome" data-welcome></p>
+
+      <section class="card">
+        <h2>Today's Pickups</h2>
+        <p class="empty" data-empty>Nothing scheduled yet.</p>
+      </section>
+
+      <section class="card">
+        <h2>Today's Returns</h2>
+        <p class="empty">Nothing scheduled yet.</p>
+      </section>
+
+      <section class="card">
+        <h2>Active Rentals</h2>
+        <p class="empty">No trailers currently out.</p>
+      </section>
+
+      <p class="muted hint">
+        Booking management, schedule, and inventory arrive in upcoming phases.
+      </p>
+    </main>
+  </template>
+
+  <script src="/operator/js/api.js"></script>
+  <script src="/operator/js/app.js"></script>
+</body>
+</html>
