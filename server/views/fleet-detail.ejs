@@ -3,15 +3,159 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fleet — <%= slug %> | Glass City Trailer Rentals</title>
+  <title><%= trailer.name %> — Availability & Quote | Glass City Trailer Rentals</title>
+  <meta name="description" content="Check availability and get a live rental quote for the <%= trailer.name %> at Glass City Trailer Rentals, Toledo OH. Pickup only." />
+  <link rel="icon" href="/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
-  <!-- Phase 1 placeholder. Real trailer detail page + availability calendar
-       lands in Phase 4. -->
-  <main>
-    <h1>Trailer: <%= slug %></h1>
-    <p>Detail page coming soon.</p>
-    <p><a href="/">← Back to Glass City Trailer Rentals</a></p>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="back" href="/#fleet">‹ <span>Back to Fleet</span></a>
+      <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
+      <a class="call" href="tel:+14196543584">Call</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="detail">
+      <!-- Left: trailer info -->
+      <section>
+        <div class="crumb">Fleet / <%= trailer.type === 'dumpster' ? 'Dumpster' : 'Trailer' %></div>
+        <h1 class="display"><%= trailer.name %></h1>
+        <% if (trailer.size_label) { %><div class="eyebrow" style="margin-bottom:18px;"><%= trailer.size_label %></div><% } %>
+
+        <% if (trailer.photo_url) { %>
+        <div class="detail-photo"><img src="<%= trailer.photo_url %>" alt="<%= trailer.name %>" /></div>
+        <% } %>
+
+        <% if (trailer.description) { %><p class="dim"><%= trailer.description %></p><% } %>
+
+        <% if (Array.isArray(trailer.specs) && trailer.specs.length) { %>
+        <ul class="specs">
+          <% trailer.specs.forEach(function (s) { %><li><%= s %></li><% }); %>
+        </ul>
+        <% } %>
+
+        <div class="eyebrow" style="margin-bottom:10px;">Rate Card</div>
+        <div class="price-matrix">
+          <div class="cell <%= trailer.hourly_rate == null ? 'na' : '' %>">
+            <div class="amt"><%= trailer.hourly_rate == null ? '—' : fmt(trailer.hourly_rate) %></div>
+            <div class="per">/hr</div>
+          </div>
+          <div class="cell <%= trailer.daily_rate == null ? 'na' : '' %>">
+            <div class="amt"><%= trailer.daily_rate == null ? '—' : fmt(trailer.daily_rate) %></div>
+            <div class="per">/day</div>
+          </div>
+          <div class="cell <%= trailer.weekly_rate == null ? 'na' : '' %>">
+            <div class="amt"><%= trailer.weekly_rate == null ? '—' : fmt(trailer.weekly_rate) %></div>
+            <div class="per">/week</div>
+          </div>
+          <div class="cell <%= trailer.monthly_rate == null ? 'na' : '' %>">
+            <div class="amt"><%= trailer.monthly_rate == null ? '—' : fmt(trailer.monthly_rate) %></div>
+            <div class="per">/month</div>
+          </div>
+        </div>
+
+        <p class="reqs-line">
+          <% if (trailer.hitch_requirement) { %><strong><%= trailer.hitch_requirement %></strong><% } %>
+          <% if (trailer.plug_requirement) { %> · <%= trailer.plug_requirement %><% } %>
+          <% if (trailer.min_hours) { %><br/><%= trailer.min_hours %> hr minimum on hourly rentals<% } %>
+          <br/>Pickup at 2004 Front St, Toledo OH — no delivery.
+        </p>
+      </section>
+
+      <!-- Right: booking panel -->
+      <aside class="panel">
+        <h2>Check Availability</h2>
+        <p class="dim mono" style="font-size:12px;">Drag-select your dates for a live quote.</p>
+
+        <div class="step">Step 1 — Pick Dates</div>
+        <div id="calendar"></div>
+
+        <div class="step">Step 2 — Your Estimate</div>
+        <div class="quote">
+          <div class="qrow"><span>Dates</span><span id="q-dates">—</span></div>
+          <div class="qrow"><span>Days</span><span id="q-days">—</span></div>
+          <div class="qrow"><span>Daily rate</span><span><%= trailer.daily_rate == null ? '—' : fmt(trailer.daily_rate) %></span></div>
+          <div class="qrow"><span>Subtotal</span><span id="q-base">—</span></div>
+          <div class="qrow"><span id="q-tax-label">Tax</span><span id="q-tax">—</span></div>
+          <div class="qtotal">
+            <span class="lbl">Total</span>
+            <span class="val" id="q-total">$0</span>
+          </div>
+          <p class="err" id="q-err"></p>
+          <p class="qnote">Estimate for customer pickup. Full balance is charged at booking. A signed rental agreement is required before pickup.</p>
+        </div>
+
+        <button class="btn btn-primary" id="reserveBtn" type="button" disabled>Reserve &amp; Pay →</button>
+        <p class="qnote" id="reserveNote" hidden></p>
+      </aside>
+    </div>
   </main>
+
+  <script id="trailer-data" type="application/json"><%- JSON.stringify(trailer) %></script>
+  <script src="/js/quote.js"></script>
+  <script src="/js/calendar.js"></script>
+  <script>
+    (function () {
+      var T = JSON.parse(document.getElementById('trailer-data').textContent);
+      var el = function (id) { return document.getElementById(id); };
+      var current = null;
+
+      function resetQuote() {
+        el('q-dates').textContent = '—';
+        el('q-days').textContent = '—';
+        el('q-base').textContent = '—';
+        el('q-tax').textContent = '—';
+        el('q-tax-label').textContent = 'Tax';
+        el('q-total').textContent = '$0';
+        el('q-err').textContent = '';
+        el('reserveBtn').disabled = true;
+        el('reserveNote').hidden = true;
+      }
+
+      function renderQuote(q, range) {
+        el('q-dates').textContent = range.start + ' → ' + range.end;
+        el('q-days').textContent = q.quantity + (q.quantity === 1 ? ' day' : ' days');
+        el('q-base').textContent = q.base_fmt;
+        el('q-tax-label').textContent = 'Tax (' + (q.tax_rate * 100).toFixed(2).replace(/\.?0+$/, '') + '%)';
+        el('q-tax').textContent = q.tax_fmt;
+        el('q-total').textContent = q.total_fmt;
+        el('q-err').textContent = '';
+        el('reserveBtn').disabled = false;
+      }
+
+      async function onRange(range) {
+        current = range;
+        el('reserveNote').hidden = true;
+        if (!range) { resetQuote(); return; }
+        try {
+          var q = await GCQuote.requestQuote({
+            slug: T.slug, period_type: 'day', start_at: range.start, end_at: range.end,
+          });
+          renderQuote(q, range);
+        } catch (e) {
+          el('q-err').textContent = e.message;
+          el('reserveBtn').disabled = true;
+        }
+      }
+
+      el('reserveBtn').addEventListener('click', function () {
+        // Online checkout (booking form + e-sign + Stripe) ships in Phase 5.
+        // Until then, surface the chosen dates and route to a phone reservation.
+        var note = el('reserveNote');
+        note.hidden = false;
+        note.innerHTML = 'Online checkout is launching shortly. To lock in <strong>' +
+          current.start + ' → ' + current.end + '</strong>, call ' +
+          '<a href="tel:+14196543584" style="color:var(--green)">(419) 654-3584</a>.';
+      });
+
+      createCalendar({ container: '#calendar', slug: T.slug, months: 2, onSelect: onRange });
+    })();
+  </script>
 </body>
 </html>

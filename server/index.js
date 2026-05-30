@@ -19,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 
 const authRoutes = require('./routes/auth');
 const operatorRoutes = require('./routes/api-operator');
+const apiPublicRoutes = require('./routes/api-public');
+const publicPageRoutes = require('./routes/public');
 const { requireAuth } = require('./middleware/auth');
 
 // --- Health check (Phase 0 acceptance) ---
@@ -31,6 +33,8 @@ app.get('/health', (req, res) => {
 // requires a valid access token.
 app.use('/api/auth', authRoutes);
 app.use('/api/operator', requireAuth, operatorRoutes);
+// Public customer API (trailers, availability, quote). No auth.
+app.use('/api', apiPublicRoutes);
 
 // --- Operator PWA (Phase 2) ---
 // Single-page app served from operator/. Mounted before the static marketing
@@ -51,12 +55,10 @@ app.use(
   })
 );
 
-// --- Server-rendered booking pages (stubbed in Phase 1) ---
-// Real trailer detail page arrives in Phase 4. For now return a 200
-// placeholder so links resolve and the route table is in place.
-app.get('/fleet/:slug', (req, res) => {
-  res.status(200).render('fleet-detail', { slug: req.params.slug });
-});
+// --- Server-rendered booking pages (Phase 4) ---
+// Trailer detail + availability calendar at /fleet/:slug and the dedicated
+// roll-off flow at /book/dumpster. Unknown slugs fall through to the 404.
+app.use('/', publicPageRoutes);
 
 // --- Static marketing site, served at / ---
 // Placed after explicit routes so /health and /fleet/* win. index.html is the

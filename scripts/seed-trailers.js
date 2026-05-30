@@ -18,6 +18,7 @@ const TRAILERS = [
     type: 'trailer',
     size_label: '7×20 ft',
     photo_url: '/images/trailer-car-hauler.jpg',
+    specs: ['Winch', 'Power Tilt', 'Straps + Axle Straps', 'Removable Fenders', 'Spare Tire', 'Adj. Drop Hitch'],
     hourly_rate: d(25),
     daily_rate: d(120),
     weekly_rate: d(600),
@@ -33,6 +34,7 @@ const TRAILERS = [
     type: 'trailer',
     size_label: '6×12 ft',
     photo_url: '/images/trailer-enclosed.jpg',
+    specs: ['Drop Gate', 'Side Door', 'Straps', 'Spare Tire'],
     hourly_rate: d(20),
     daily_rate: d(75),
     weekly_rate: d(350),
@@ -48,6 +50,7 @@ const TRAILERS = [
     type: 'trailer',
     size_label: '7×16×4 ft',
     photo_url: '/images/trailer-dump.jpg',
+    specs: ['Electric Dump', 'Ramps', 'Net', 'Spare Tire', '17 yd Capacity', 'Adj. Drop Hitch'],
     hourly_rate: d(30),
     daily_rate: d(150),
     weekly_rate: d(650),
@@ -63,6 +66,7 @@ const TRAILERS = [
     type: 'trailer',
     size_label: '6×12 ft',
     photo_url: '/images/trailer-utility.jpg',
+    specs: ['Ramp Gate', 'Straps', 'Spare Tire'],
     hourly_rate: null, // not offered hourly
     daily_rate: d(50),
     weekly_rate: d(250),
@@ -78,6 +82,7 @@ const TRAILERS = [
     type: 'dumpster',
     size_label: '25 yd',
     photo_url: '/images/trailer-25yard.jpg',
+    specs: ['Drop-off & pickup included', '25 yd capacity', 'Renovation & cleanout ready'],
     // Dumpster flat pricing
     flat_drop_off_cents: d(420),
     flat_drop_off_days: 3,
@@ -95,12 +100,12 @@ const UPSERT = `
     slug, name, type, size_label, description, photo_url,
     hourly_rate, daily_rate, weekly_rate, monthly_rate,
     flat_drop_off_cents, flat_drop_off_days, extra_day_cents, per_tire_cents,
-    hitch_requirement, plug_requirement, min_hours, display_order
+    hitch_requirement, plug_requirement, min_hours, display_order, specs
   ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
     $11, $12, $13, $14,
-    $15, $16, $17, $18
+    $15, $16, $17, $18, $19::jsonb
   )
   ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
@@ -120,6 +125,7 @@ const UPSERT = `
     plug_requirement = EXCLUDED.plug_requirement,
     min_hours = EXCLUDED.min_hours,
     display_order = EXCLUDED.display_order,
+    specs = EXCLUDED.specs,
     updated_at = NOW()
 `;
 
@@ -144,6 +150,7 @@ async function main() {
       t.plug_requirement ?? null,
       t.min_hours ?? null,
       t.display_order ?? 0,
+      JSON.stringify(t.specs ?? []),
     ]);
     console.log(`  ✓ ${t.slug} — ${t.name}`);
   }

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>25-Yard Roll-Off Dumpster — Book Online | Glass City Trailer Rentals</title>
+  <meta name="description" content="Book a 25-yard roll-off dumpster in Toledo, OH. $420 drop-off with 3 days included, $25 per extra day. Drop-off and pickup included." />
+  <link rel="icon" href="/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="back" href="/#fleet">‹ <span>Back to Fleet</span></a>
+      <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
+      <a class="call" href="tel:+14196543584">Call</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="detail">
+      <!-- Left: info -->
+      <section>
+        <div class="crumb">Fleet / Dumpster</div>
+        <h1 class="display"><%= trailer.name %></h1>
+        <div class="eyebrow" style="margin-bottom:18px;"><%= trailer.size_label || '25 yd' %></div>
+
+        <% if (trailer.photo_url) { %>
+        <div class="detail-photo"><img src="<%= trailer.photo_url %>" alt="<%= trailer.name %>" /></div>
+        <% } %>
+
+        <p class="dim">
+          Perfect for renovations, roof tear-offs, garage cleanouts and big project debris.
+          We drop it, you fill it, we haul it. Drop-off and pickup are included.
+        </p>
+
+        <div class="eyebrow" style="margin:18px 0 10px;">How Pricing Works</div>
+        <div class="price-matrix">
+          <div class="cell">
+            <div class="amt"><%= fmt(trailer.flat_drop_off_cents) %></div>
+            <div class="per">Drop-off (<%= trailer.flat_drop_off_days || 3 %> days)</div>
+          </div>
+          <div class="cell">
+            <div class="amt"><%= fmt(trailer.extra_day_cents) %></div>
+            <div class="per">Per extra day</div>
+          </div>
+          <div class="cell">
+            <div class="amt"><%= fmt(trailer.per_tire_cents) %></div>
+            <div class="per">Per tire if found</div>
+          </div>
+        </div>
+
+        <p class="reqs-line">
+          <span class="warn">⚠ Tires are prohibited</span> — charged <%= fmt(trailer.per_tire_cents) %> each only if found in the bin at pickup.
+          <br/>Tire fees are not billed up front.
+        </p>
+      </section>
+
+      <!-- Right: booking panel -->
+      <aside class="panel">
+        <h2>Book This Bin</h2>
+        <p class="dim mono" style="font-size:12px;">Choose your drop-off date and length.</p>
+
+        <div class="step">Step 1 — Drop-off Date</div>
+        <div class="field-row">
+          <input type="date" id="dropDate" min="<%= new Date().toISOString().slice(0,10) %>" />
+        </div>
+
+        <div class="step">Step 2 — How Long?</div>
+        <div class="field-row two">
+          <div>
+            <label class="fl">Extra days beyond <%= trailer.flat_drop_off_days || 3 %></label>
+            <input type="number" id="extraDays" min="0" value="0" />
+          </div>
+          <div>
+            <label class="fl">Tires (if any)</label>
+            <input type="number" id="tireCount" min="0" value="0" />
+          </div>
+        </div>
+
+        <div class="step">Step 3 — Your Estimate</div>
+        <div class="quote">
+          <div class="qrow"><span>Drop-off (<%= trailer.flat_drop_off_days || 3 %> days incl.)</span><span><%= fmt(trailer.flat_drop_off_cents) %></span></div>
+          <div class="qrow" id="q-extra-row" hidden><span id="q-extra-label">Extra days</span><span id="q-extra">—</span></div>
+          <div class="qrow"><span>Subtotal</span><span id="q-base">—</span></div>
+          <div class="qrow"><span id="q-tax-label">Tax</span><span id="q-tax">—</span></div>
+          <div class="qtotal">
+            <span class="lbl">Total</span>
+            <span class="val" id="q-total">$0</span>
+          </div>
+          <div class="qrow" id="q-tire-row" hidden><span class="warn">Possible tire fees</span><span id="q-tire">—</span></div>
+          <p class="err" id="q-err"></p>
+          <p class="qnote">Full balance is charged at booking. Tire fees, if any, are settled at pickup. A signed rental agreement is required.</p>
+        </div>
+
+        <label class="tire-ack">
+          <input type="checkbox" id="ack" />
+          <span>I understand tires are prohibited and will be charged <%= fmt(trailer.per_tire_cents) %> each if found.</span>
+        </label>
+
+        <button class="btn btn-primary" id="reserveBtn" type="button" disabled>Reserve &amp; Pay →</button>
+        <p class="qnote" id="reserveNote" hidden></p>
+      </aside>
+    </div>
+  </main>
+
+  <script id="trailer-data" type="application/json"><%- JSON.stringify(trailer) %></script>
+  <script src="/js/quote.js"></script>
+  <script>
+    (function () {
+      var T = JSON.parse(document.getElementById('trailer-data').textContent);
+      var el = function (id) { return document.getElementById(id); };
+      var lastQuote = null;
+
+      function refreshReserve() {
+        el('reserveBtn').disabled = !(lastQuote && el('dropDate').value && el('ack').checked);
+      }
+
+      async function update() {
+        el('reserveNote').hidden = true;
+        var extraDays = Math.max(0, parseInt(el('extraDays').value, 10) || 0);
+        var tireCount = Math.max(0, parseInt(el('tireCount').value, 10) || 0);
+        try {
+          var q = await GCQuote.requestQuote({
+            slug: T.slug, period_type: 'roll_off', extra_days: extraDays, tire_count: tireCount,
+          });
+          lastQuote = q;
+
+          var extraCents = (T.extra_day_cents || 0) * extraDays;
+          el('q-extra-row').hidden = extraDays === 0;
+          el('q-extra-label').textContent = extraDays + ' extra day' + (extraDays === 1 ? '' : 's');
+          el('q-extra').textContent = GCQuote.money(extraCents);
+
+          el('q-base').textContent = q.base_fmt;
+          el('q-tax-label').textContent = 'Tax (' + (q.tax_rate * 100).toFixed(2).replace(/\.?0+$/, '') + '%)';
+          el('q-tax').textContent = q.tax_fmt;
+          el('q-total').textContent = q.total_fmt;
+
+          var tireCents = (T.per_tire_cents || 0) * tireCount;
+          el('q-tire-row').hidden = tireCount === 0;
+          el('q-tire').textContent = '+ ' + GCQuote.money(tireCents) + ' at pickup';
+
+          el('q-err').textContent = '';
+        } catch (e) {
+          lastQuote = null;
+          el('q-err').textContent = e.message;
+        }
+        refreshReserve();
+      }
+
+      ['extraDays', 'tireCount'].forEach(function (id) { el(id).addEventListener('input', update); });
+      el('dropDate').addEventListener('change', refreshReserve);
+      el('ack').addEventListener('change', refreshReserve);
+
+      el('reserveBtn').addEventListener('click', function () {
+        // Online checkout (booking + e-sign + Stripe) ships in Phase 5.
+        var note = el('reserveNote');
+        note.hidden = false;
+        note.innerHTML = 'Online checkout is launching shortly. To schedule drop-off on <strong>' +
+          el('dropDate').value + '</strong>, call <a href="tel:+14196543584" style="color:var(--green)">(419) 654-3584</a>.';
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
