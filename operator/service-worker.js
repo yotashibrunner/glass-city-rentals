@@ -15,7 +15,7 @@
  * Bump CACHE_VERSION whenever a shell file changes to force a refresh.
  */
 
-const CACHE_VERSION = 'gc-operator-v4';
+const CACHE_VERSION = 'gc-operator-v5';
 
 // Precache the shell so the app is installable and works offline.
 const SHELL = [
@@ -24,6 +24,7 @@ const SHELL = [
   '/operator/css/app.css',
   '/operator/js/app.js',
   '/operator/js/api.js',
+  '/operator/js/push.js',
   '/operator/manifest.json',
   '/operator/icons/icon-192.png',
   '/operator/icons/icon-512.png',
@@ -42,6 +43,45 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+  );
+});
+
+// ── Web Push (Phase 8) ──────────────────────────────────────────────────
+// A push arrives with a JSON payload { title, body, url, tag }. Show a
+// notification; tapping it focuses an existing operator window (or opens one)
+// and navigates to the deep link.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { title: 'Glass City', body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || 'Glass City Trailer Rentals';
+  const options = {
+    body: data.body || '',
+    tag: data.tag || undefined,
+    icon: '/operator/icons/icon-192.png',
+    badge: '/operator/icons/icon-192.png',
+    vibrate: [120, 60, 120],
+    data: { url: data.url || '/operator/' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/operator/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes('/operator') && 'focus' in client) {
+          client.navigate(target).catch(() => {});
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    })
   );
 });
 

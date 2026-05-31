@@ -14,6 +14,10 @@
 //   GET   /api/operator/blackouts     list blackouts
 //   POST  /api/operator/blackouts     block a date range (one trailer or fleet)
 //   DELETE /api/operator/blackouts/:id  unblock
+//   GET   /api/operator/push/key      VAPID public key + configured flag
+//   POST  /api/operator/push/subscribe   store this device's push subscription
+//   POST  /api/operator/push/unsubscribe clear it
+//   POST  /api/operator/push/test     send a test push to this operator
 //   GET   /api/operator/trailers      full fleet with status, pricing, specs
 //   PATCH /api/operator/trailers/:id  update status / pricing / other fields
 
@@ -21,6 +25,7 @@ const express = require('express');
 const { pool, query } = require('../db');
 const bookingSvc = require('../services/booking');
 const blackoutSvc = require('../services/blackouts');
+const pushSvc = require('../services/push');
 const { formatCents } = require('../utils/money');
 const { todayUTC, addDays, parseDateOnly } = require('../utils/date');
 
@@ -219,6 +224,67 @@ router.delete('/blackouts/:id', async (req, res, next) => {
     res.json({ ok: true });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+// ── Web Push (Phase 8) ─────────────────────────────────────────────────
+// GET /api/operator/push/key — the VAPID public key the browser needs to
+// subscribe, plus whether push is configured server-side at all.
+router.get('/push/key', (req, res) => {
+  res.json({ configured: pushSvc.isConfigured(), publicKey: pushSvc.getPublicKey() });
+});
+
+// POST /api/operator/push/subscribe — store this device's PushSubscription on
+// the operator's account. Body: { subscription: <PushSubscription> }.
+router.post('/push/subscribe', async (req, res, next) => {
+  try {
+    const sub = req.body && req.body.subscription;
+    await pushSvc.saveSubscription(req.user.id, sub);
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+// POST /api/operator/push/unsubscribe — forget this operator's subscription.
+router.post('/push/unsubscribe', async (req, res, next) => {
+  try {
+    await pushSvc.clearSubscription(req.user.id);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/operator/push/test — send a test notification to the requesting
+// operator's own device, so they can confirm alerts work end-to-end.
+router.post('/push/test', async (req, res, next) => {
+  try {
+    if (!pushSvc.isConfigured()) {
+      return res.status(503).json({ error: 'Push is not configured on the server.' });
+    }
+    const { rows } = await query(
+      'SELECT push_subscription FROM admin_users WHERE id = $1', [req.user.id]
+    );
+    const stored = rows[0] && rows[0].push_subscription;
+    if (!stored) return res.status(400).json({ error: 'No push subscription on this account yet.' });
+
+    const sub = typeof stored === 'string' ? JSON.parse(stored) : stored;
+    const result = await pushSvc.sendToSubscription(sub, {
+      title: 'Glass City — test alert',
+      body: 'Push notifications are working on this device. 🎉',
+      url: '/operator/',
+      tag: 'push-test',
+    });
+    if (result.expired) {
+      await pushSvc.clearSubscription(req.user.id);
+      return res.status(409).json({ error: 'This subscription expired. Re-enable alerts.' });
+    }
+    if (!result.ok) return res.status(502).json({ error: result.error || 'Send failed.' });
+    res.json({ ok: true });
+  } catch (err) {
     next(err);
   }
 });

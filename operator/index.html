@@ -95,6 +95,17 @@
 
       <p class="error" data-error hidden></p>
 
+      <section class="card notif-card" data-notif hidden>
+        <h2>Alerts on this device</h2>
+        <p class="muted" data-notif-status>Checking…</p>
+        <div class="notif-actions">
+          <button type="button" class="btn btn-primary" data-notif-enable hidden>Enable alerts</button>
+          <button type="button" class="btn btn-ghost" data-notif-test hidden>Send test</button>
+          <button type="button" class="btn btn-ghost" data-notif-disable hidden>Turn off</button>
+        </div>
+        <p class="error" data-notif-error hidden></p>
+      </section>
+
       <section class="card">
         <h2>Today's Pickups <span class="count" data-count="pickups"></span></h2>
         <ul class="booking-list" data-list="pickups"></ul>
@@ -369,6 +380,7 @@
   </template>
 
   <script src="/operator/js/api.js"></script>
+  <script src="/operator/js/push.js"></script>
   <script src="/operator/js/app.js"></script>
 </body>
 </html>

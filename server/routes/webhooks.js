@@ -9,6 +9,7 @@ const express = require('express');
 const stripeSvc = require('../services/stripe');
 const bookingSvc = require('../services/booking');
 const emailSvc = require('../services/email');
+const notifySvc = require('../services/notify');
 const { generatePdf } = require('../services/contract');
 
 const router = express.Router();
@@ -35,6 +36,12 @@ router.post('/stripe', async (req, res) => {
           await emailSvc.sendBookingConfirmation(booking, pdf, baseUrl);
         } catch (e) {
           console.error('[webhook] confirmation email failed:', e.message);
+        }
+        // Alert the operator(s) on push + SMS. Best-effort: notify never throws.
+        try {
+          await notifySvc.notifyNewBooking(booking, baseUrl);
+        } catch (e) {
+          console.error('[webhook] operator notification failed:', e.message);
         }
         console.log(`[webhook] booking ${booking.ref_code} marked paid`);
       }

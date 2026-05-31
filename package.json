@@ -16,7 +16,9 @@
     "seed": "node scripts/seed-trailers.js",
     "seed:bookings": "node scripts/seed-bookings.js",
     "create-admin": "node scripts/create-admin.js",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "generate-vapid": "node scripts/generate-vapid.js",
+    "reminders": "node scripts/send-reminders.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -28,7 +30,8 @@
     "pdfkit": "^0.18.0",
     "pg": "^8.13.1",
     "resend": "^6.12.4",
-    "stripe": "^22.2.0"
+    "stripe": "^22.2.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "sharp": "^0.34.5"

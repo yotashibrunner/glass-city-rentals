@@ -255,6 +255,8 @@
     root.querySelector('[data-nav="schedule"]').addEventListener('click', () => renderSchedule());
     root.querySelector('[data-nav="calendar"]').addEventListener('click', () => renderCalendar());
 
+    setupNotifications();
+
     // Show whatever we already know immediately, then confirm with the API.
     const cached = api.auth.user;
     if (cached) welcome.textContent = `Signed in as ${cached.name || cached.email}.`;
@@ -978,12 +980,80 @@
     loadList();
   }
 
+  // ── Notifications (Phase 8) ──────────────────────────────────────────────
+  // Wires the dashboard "Alerts on this device" card to the GC.push module.
+  // Adapts to support / permission / subscription state.
+  async function setupNotifications() {
+    const card = root.querySelector('[data-notif]');
+    if (!card || !GC.push) return;
+    const statusEl = card.querySelector('[data-notif-status]');
+    const enableBtn = card.querySelector('[data-notif-enable]');
+    const testBtn = card.querySelector('[data-notif-test]');
+    const disableBtn = card.querySelector('[data-notif-disable]');
+    const errEl = card.querySelector('[data-notif-error]');
+    const push = GC.push;
+
+    card.hidden = false;
+    const show = (btn, on) => { btn.hidden = !on; };
+
+    async function paint() {
+      errEl.hidden = true;
+      const st = await push.status();
+      if (!st.supported) {
+        statusEl.textContent = 'This device or browser doesn’t support push notifications.';
+        show(enableBtn, false); show(testBtn, false); show(disableBtn, false);
+        return;
+      }
+      if (st.permission === 'denied') {
+        statusEl.textContent = 'Notifications are blocked in your browser settings — re-allow them to turn alerts on.';
+        show(enableBtn, false); show(testBtn, false); show(disableBtn, false);
+        return;
+      }
+      if (st.subscribed) {
+        statusEl.textContent = 'On — this device gets a push when a new booking is paid.';
+        show(enableBtn, false); show(testBtn, true); show(disableBtn, true);
+      } else {
+        statusEl.textContent = 'Off — enable alerts to get a push the moment a booking comes in.';
+        show(enableBtn, true); show(testBtn, false); show(disableBtn, false);
+      }
+    }
+
+    function run(btn, label, fn, after) {
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = label;
+      Promise.resolve()
+        .then(fn)
+        .then(() => { if (after) return after(); })
+        .catch((err) => {
+          if (handleAuth(err)) return;
+          errEl.textContent = err.message || 'Something went wrong.';
+          errEl.hidden = false;
+        })
+        .finally(() => { btn.disabled = false; btn.textContent = original; });
+    }
+
+    enableBtn.addEventListener('click', () => run(enableBtn, 'Enabling…', () => push.enable(), paint));
+    disableBtn.addEventListener('click', () => run(disableBtn, 'Turning off…', () => push.disable(), paint));
+    testBtn.addEventListener('click', () => run(testBtn, 'Sending…', () => push.test()));
+
+    paint();
+  }
+
   // ── Boot ────────────────────────────────────────────────────────────────
   function start() {
-    if (api.auth.isLoggedIn()) {
-      renderDashboard();
-    } else {
+    if (!api.auth.isLoggedIn()) {
       renderLogin();
+      return;
+    }
+    // A push notification deep-links to /operator/?booking=<id> — open it
+    // directly, then strip the param so a later refresh lands on the dashboard.
+    const bookingId = new URLSearchParams(window.location.search).get('booking');
+    if (bookingId) {
+      history.replaceState({}, '', '/operator/');
+      renderBookingDetail(bookingId, renderDashboard);
+    } else {
+      renderDashboard();
     }
   }
 

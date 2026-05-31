@@ -51,6 +51,20 @@ const config = {
   // Optional: when unset, confirmation emails are skipped (logged, not sent).
   resendApiKey: process.env.RESEND_API_KEY || '',
   fromEmail: process.env.FROM_EMAIL || 'bookings@glasscitytrailerrentals.com',
+
+  // ── Web Push — VAPID (Phase 8) ──────────────────────────────────────
+  // Optional: when unset, push subscribe/send are no-ops (logged). Generate a
+  // keypair with `npm run generate-vapid` and set both halves + a subject.
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY || '',
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY || '',
+  vapidSubject: process.env.VAPID_SUBJECT || 'mailto:owner@glasscitytrailerrentals.com',
+
+  // ── SMS — Twilio (Phase 8) ──────────────────────────────────────────
+  // Optional: when unset, SMS sends are skipped (logged). Uses the Twilio REST
+  // API directly (no SDK dependency).
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
+  twilioFromNumber: process.env.TWILIO_FROM_NUMBER || '',
 };
 
 config.isProduction = config.env === 'production';
