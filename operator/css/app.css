@@ -357,6 +357,102 @@ input:focus-visible {
 .date-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
 .day-label { margin: -4px 2px 0; font-weight: 600; }
 
+/* ── Calendar ───────────────────────────────────────────────────────── */
+.cal-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; }
+.cal-bar .step { min-width: 44px; font-size: 1.3rem; padding: 6px 12px; }
+.cal-title { font-weight: 700; font-size: 1.05rem; text-align: center; flex: 1; }
+
+.cal-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* Segmented Month/Week toggle */
+.seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+.seg-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+.seg-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+/* Month/week grid */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 2px 0; }
+.cal-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 2px 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.cal-cell:active { background: var(--surface-2); }
+.cal-cell.outside { opacity: 0.4; }
+.cal-cell.today { border-color: var(--accent); }
+.cal-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Blocked days get a diagonal hatch so they read as unavailable. */
+.cal-cell.blocked {
+  background:
+    repeating-linear-gradient(45deg, rgba(229,83,75,0.16) 0 5px, transparent 5px 10px),
+    var(--surface);
+  border-color: rgba(229, 83, 75, 0.5);
+}
+.cal-num { font-size: 0.8rem; font-weight: 600; }
+.cal-dots { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; }
+.cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+.cal-more { font-size: 0.62rem; color: var(--muted); font-weight: 700; line-height: 1; }
+
+.cal-legend { display: flex; gap: 18px; justify-content: center; font-size: 0.8rem; color: var(--muted); }
+.cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cal-legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.cal-legend .sw-book { background: hsl(150 55% 55%); }
+.cal-legend .sw-block { background: repeating-linear-gradient(45deg, rgba(229,83,75,0.6) 0 4px, transparent 4px 8px), var(--surface-2); border: 1px solid rgba(229,83,75,0.5); }
+
+.cal-day-panel h2 { margin: 0; font-size: 1rem; }
+.cal-day-panel .booking-list:empty, .cal-day-panel .blackout-list:empty { display: none; }
+.cal-day-panel .booking-list, .cal-day-panel .blackout-list { margin-top: 10px; }
+
+/* ── Blackouts ──────────────────────────────────────────────────────── */
+.blackout-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.blackout-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.blackout-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.blackout-trailer { font-weight: 600; }
+.blackout-when { font-size: 0.82rem; }
+.blackout-reason { font-size: 0.82rem; font-style: italic; }
+.blackout-del { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; color: #f08a83; flex-shrink: 0; }
+
+select {
+  width: 100%;
+  font-size: 1rem;
+  padding: 13px 14px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
 /* ── Misc ───────────────────────────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.9rem; }
 .welcome { margin: 4px 2px 0; }

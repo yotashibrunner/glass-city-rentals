@@ -94,6 +94,17 @@
     return new Date(d.getTime() + days * DAY_MS).toISOString().slice(0, 10);
   }
 
+  // 'YYYY-MM-DD' ⇄ UTC-midnight Date.
+  function parseUTC(isoDate) { return new Date(`${isoDate}T00:00:00Z`); }
+  function ymd(d) { return d.toISOString().slice(0, 10); }
+
+  function fmtMonthYear(d) {
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+  function fmtShortDay(d) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
+
   // ── Booking status badges ────────────────────────────────────────────────
   const BOOKING_STATUS = {
     pending: { label: 'Pending', cls: 'badge-warn' },
@@ -128,6 +139,21 @@
     const stripe = node.querySelector('[data-stripe]');
     stripe.style.background = `hsl(${trailerHue(b.trailer_slug || b.trailer_name)} 55% 50%)`;
     node.querySelector('[data-open]').addEventListener('click', () => onOpen(b));
+  }
+
+  // Fill a cloned tpl-blackout-row. onDelete(bo, rowEl) handles removal.
+  function fillBlackoutRow(node, bo, onDelete) {
+    const trailerEl = node.querySelector('[data-trailer]');
+    trailerEl.textContent = bo.fleet_wide ? 'All trailers' : (bo.trailer_name || 'Trailer');
+    const when = bo.start_date === bo.end_date
+      ? fmtDay(bo.start_date)
+      : `${fmtDay(bo.start_date)} – ${fmtDay(bo.end_date)}`;
+    node.querySelector('[data-when]').textContent = when;
+    const reasonEl = node.querySelector('[data-reason]');
+    if (bo.reason) reasonEl.textContent = bo.reason; else reasonEl.hidden = true;
+    const delBtn = node.querySelector('[data-del]');
+    const li = node.querySelector('.blackout-row');
+    delBtn.addEventListener('click', () => onDelete(bo, li, delBtn));
   }
 
   // Keep a badge + toggle button visually in sync with a trailer's status.
@@ -227,6 +253,7 @@
     });
     root.querySelector('[data-nav="inventory"]').addEventListener('click', () => renderInventory());
     root.querySelector('[data-nav="schedule"]').addEventListener('click', () => renderSchedule());
+    root.querySelector('[data-nav="calendar"]').addEventListener('click', () => renderCalendar());
 
     // Show whatever we already know immediately, then confirm with the API.
     const cached = api.auth.user;
@@ -617,6 +644,338 @@
         saveBtn.textContent = 'Save changes';
       }
     });
+  }
+
+  // ── Blackout removal (shared by calendar + blackouts screens) ───────────
+  async function confirmDeleteBlackout(bo, onDone, btn) {
+    const label = bo.fleet_wide ? 'all trailers' : (bo.trailer_name || 'this trailer');
+    if (!window.confirm(`Remove the blackout for ${label}?`)) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Removing…'; }
+    try {
+      await api.apiFetch(`/api/operator/blackouts/${bo.id}`, { method: 'DELETE' });
+      onDone();
+    } catch (err) {
+      if (handleAuth(err)) return;
+      if (btn) { btn.disabled = false; btn.textContent = 'Remove'; }
+      window.alert(err.message || 'Could not remove the blackout.');
+    }
+  }
+
+  // ── Calendar ─────────────────────────────────────────────────────────────
+  // Month/week grid of bookings (dots, color-coded by trailer) + blackouts
+  // (shaded cells). Tapping a day opens a panel listing that day's bookings and
+  // blackouts, with a quick "Block" action. `state` can carry { mode, anchor,
+  // selected } to restore the view after drilling into a booking or blackout.
+  const CAL_DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  async function renderCalendar(state) {
+    mount('tpl-calendar');
+    root.querySelector('[data-back]').addEventListener('click', () => renderDashboard());
+
+    const view = { mode: 'month', anchor: todayISODate(), ...(state || {}) };
+    let selected = view.selected || null;
+
+    const titleEl = root.querySelector('[data-title]');
+    const gridEl = root.querySelector('[data-grid]');
+    const legendEl = root.querySelector('[data-legend]');
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const panelEl = root.querySelector('[data-day-panel]');
+    const modeBtns = root.querySelectorAll('[data-mode]');
+    const todayISO = todayISODate();
+
+    let bookingRanges = [];   // [{ b, s, e }]
+    let blackoutRanges = [];  // [{ x, s, e }]
+
+    function setMode(mode) {
+      view.mode = mode;
+      modeBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    }
+    setMode(view.mode);
+    modeBtns.forEach((b) => b.addEventListener('click', () => {
+      if (view.mode === b.dataset.mode) return;
+      setMode(b.dataset.mode);
+      selected = null;
+      load();
+    }));
+
+    root.querySelector('[data-manage]').addEventListener('click', () =>
+      renderBlackouts({}, () => renderCalendar(view)));
+
+    root.querySelector('[data-prev]').addEventListener('click', () => step(-1));
+    root.querySelector('[data-next]').addEventListener('click', () => step(1));
+
+    function step(dir) {
+      const a = parseUTC(view.anchor);
+      if (view.mode === 'week') {
+        view.anchor = ymd(new Date(a.getTime() + dir * 7 * DAY_MS));
+      } else {
+        // Jump whole months, anchored to the 1st to avoid day overflow.
+        view.anchor = ymd(new Date(Date.UTC(a.getUTCFullYear(), a.getUTCMonth() + dir, 1)));
+      }
+      selected = null;
+      load();
+    }
+
+    // Visible grid: a Sunday start + number of weeks.
+    function gridInfo() {
+      const a = parseUTC(view.anchor);
+      if (view.mode === 'week') {
+        const start = new Date(a.getTime() - a.getUTCDay() * DAY_MS);
+        return { start, weeks: 1, monthIndex: null };
+      }
+      const monthFirst = new Date(Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), 1));
+      const start = new Date(monthFirst.getTime() - monthFirst.getUTCDay() * DAY_MS);
+      return { start, weeks: 6, monthIndex: monthFirst.getUTCMonth() };
+    }
+
+    function overlapping(ranges, dayStart) {
+      const dayEnd = dayStart + DAY_MS;
+      return ranges.filter((r) => r.s < dayEnd && r.e > dayStart);
+    }
+
+    function paintTitle(info) {
+      if (view.mode === 'week') {
+        const end = new Date(info.start.getTime() + 6 * DAY_MS);
+        titleEl.textContent = `${fmtShortDay(info.start)} – ${fmtShortDay(end)}`;
+      } else {
+        titleEl.textContent = fmtMonthYear(parseUTC(view.anchor));
+      }
+    }
+
+    function renderGrid(info) {
+      gridEl.replaceChildren();
+      for (const d of CAL_DOW) {
+        const h = document.createElement('div');
+        h.className = 'cal-dow';
+        h.textContent = d[0];
+        h.setAttribute('aria-label', d);
+        gridEl.appendChild(h);
+      }
+      const cells = info.weeks * 7;
+      for (let i = 0; i < cells; i++) {
+        const day = new Date(info.start.getTime() + i * DAY_MS);
+        const iso = ymd(day);
+        const dayStart = day.getTime();
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'cal-cell';
+        if (info.monthIndex !== null && day.getUTCMonth() !== info.monthIndex) cell.classList.add('outside');
+        if (iso === todayISO) cell.classList.add('today');
+        if (iso === selected) cell.classList.add('selected');
+
+        const num = document.createElement('span');
+        num.className = 'cal-num';
+        num.textContent = String(day.getUTCDate());
+        cell.appendChild(num);
+
+        const dayBookings = overlapping(bookingRanges, dayStart);
+        if (overlapping(blackoutRanges, dayStart).length) cell.classList.add('blocked');
+
+        if (dayBookings.length) {
+          const dots = document.createElement('span');
+          dots.className = 'cal-dots';
+          for (const r of dayBookings.slice(0, 3)) {
+            const dot = document.createElement('span');
+            dot.className = 'cal-dot';
+            dot.style.background = `hsl(${trailerHue(r.b.trailer_slug || r.b.trailer_name)} 55% 55%)`;
+            dots.appendChild(dot);
+          }
+          if (dayBookings.length > 3) {
+            const more = document.createElement('span');
+            more.className = 'cal-more';
+            more.textContent = `+${dayBookings.length - 3}`;
+            dots.appendChild(more);
+          }
+          cell.appendChild(dots);
+        }
+
+        cell.addEventListener('click', () => {
+          selected = iso;
+          gridEl.querySelectorAll('.cal-cell.selected').forEach((c) => c.classList.remove('selected'));
+          cell.classList.add('selected');
+          renderDayPanel(iso);
+        });
+        gridEl.appendChild(cell);
+      }
+    }
+
+    function renderDayPanel(iso) {
+      const dayStart = parseUTC(iso).getTime();
+      const dayBookings = overlapping(bookingRanges, dayStart).map((r) => r.b);
+      const dayBlackouts = overlapping(blackoutRanges, dayStart).map((r) => r.x);
+
+      root.querySelector('[data-day-title]').textContent = fmtDay(iso);
+      const boList = root.querySelector('[data-day-blackouts]');
+      const bkList = root.querySelector('[data-day-bookings]');
+      const emptyEl = root.querySelector('[data-day-empty]');
+      boList.replaceChildren();
+      bkList.replaceChildren();
+
+      const boTpl = document.getElementById('tpl-blackout-row');
+      for (const bo of dayBlackouts) {
+        const node = boTpl.content.cloneNode(true);
+        fillBlackoutRow(node, bo, (b, li, btn) => confirmDeleteBlackout(b, () => load(), btn));
+        boList.appendChild(node);
+      }
+      const rowTpl = document.getElementById('tpl-booking-row');
+      for (const b of dayBookings) {
+        const node = rowTpl.content.cloneNode(true);
+        fillBookingRow(node, b, (bk) =>
+          renderBookingDetail(bk.id, () => renderCalendar({ ...view, selected: iso })));
+        bkList.appendChild(node);
+      }
+      emptyEl.hidden = dayBookings.length > 0 || dayBlackouts.length > 0;
+
+      root.querySelector('[data-block-day]').onclick = () =>
+        renderBlackouts({ start: iso, end: iso }, () => renderCalendar({ ...view, selected: iso }));
+
+      panelEl.hidden = false;
+    }
+
+    async function load() {
+      const info = gridInfo();
+      paintTitle(info);
+      loadingEl.hidden = false;
+      errEl.hidden = true;
+      gridEl.hidden = true;
+      legendEl.hidden = true;
+      panelEl.hidden = true;
+
+      const from = ymd(info.start);
+      const to = ymd(new Date(info.start.getTime() + info.weeks * 7 * DAY_MS)); // exclusive
+
+      let data;
+      try {
+        data = await api.apiFetch(`/api/operator/calendar?from=${from}&to=${to}`);
+      } catch (err) {
+        if (handleAuth(err)) return;
+        loadingEl.hidden = true;
+        errEl.textContent = err.message || 'Could not load the calendar.';
+        errEl.hidden = false;
+        return;
+      }
+
+      bookingRanges = (data.bookings || []).map((b) => ({ b, s: Date.parse(b.start_at), e: Date.parse(b.end_at) }));
+      blackoutRanges = (data.blackouts || []).map((x) => ({ x, s: Date.parse(x.start_at), e: Date.parse(x.end_at) }));
+
+      loadingEl.hidden = true;
+      renderGrid(info);
+      gridEl.hidden = false;
+      legendEl.hidden = false;
+      if (selected) renderDayPanel(selected);
+    }
+
+    load();
+  }
+
+  // ── Blackouts management ─────────────────────────────────────────────────
+  // Add form (trailer / from / to / reason) + a list of current blackouts with
+  // remove buttons. `prefill` can seed the date inputs; `onBack` overrides the
+  // back target (defaults to the calendar).
+  async function renderBlackouts(prefill, onBack) {
+    mount('tpl-blackouts');
+    root.querySelector('[data-back]').addEventListener('click', () => (onBack || renderCalendar)());
+
+    const formEl = root.querySelector('[data-form]');
+    const trailerSel = root.querySelector('[data-trailer]');
+    const startEl = root.querySelector('[data-start]');
+    const endEl = root.querySelector('[data-end]');
+    const reasonEl = root.querySelector('[data-reason]');
+    const errEl = root.querySelector('[data-error]');
+    const savedEl = root.querySelector('[data-saved]');
+    const saveBtn = root.querySelector('[data-save]');
+
+    const loadingEl = root.querySelector('[data-loading]');
+    const listErrEl = root.querySelector('[data-list-error]');
+    const listEl = root.querySelector('[data-list]');
+    const emptyEl = root.querySelector('[data-empty]');
+
+    if (prefill && prefill.start) startEl.value = prefill.start;
+    if (prefill && prefill.end) endEl.value = prefill.end;
+
+    // Populate the trailer dropdown ("All trailers" is already in the markup).
+    try {
+      const data = await api.apiFetch('/api/operator/trailers');
+      for (const t of data.trailers || []) {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        trailerSel.appendChild(opt);
+      }
+    } catch (err) {
+      if (handleAuth(err)) return;
+      // Non-fatal — the operator can still block the whole fleet.
+    }
+
+    async function loadList() {
+      loadingEl.hidden = false;
+      listErrEl.hidden = true;
+      listEl.hidden = true;
+      emptyEl.hidden = true;
+      listEl.replaceChildren();
+
+      let blackouts;
+      try {
+        const data = await api.apiFetch('/api/operator/blackouts');
+        blackouts = data.blackouts || [];
+      } catch (err) {
+        if (handleAuth(err)) return;
+        loadingEl.hidden = true;
+        listErrEl.textContent = err.message || 'Could not load blackouts.';
+        listErrEl.hidden = false;
+        return;
+      }
+
+      loadingEl.hidden = true;
+      if (!blackouts.length) { emptyEl.hidden = false; return; }
+      const tpl = document.getElementById('tpl-blackout-row');
+      for (const bo of blackouts) {
+        const node = tpl.content.cloneNode(true);
+        fillBlackoutRow(node, bo, (b, li, btn) => confirmDeleteBlackout(b, loadList, btn));
+        listEl.appendChild(node);
+      }
+      listEl.hidden = false;
+    }
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.hidden = true;
+      savedEl.hidden = true;
+      const start = startEl.value;
+      const end = endEl.value || start;
+      if (!start) {
+        errEl.textContent = 'Pick a start date.';
+        errEl.hidden = false;
+        return;
+      }
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Blocking…';
+      try {
+        await api.apiFetch('/api/operator/blackouts', {
+          method: 'POST',
+          body: JSON.stringify({
+            trailer_id: trailerSel.value || null,
+            start,
+            end,
+            reason: reasonEl.value.trim() || null,
+          }),
+        });
+        savedEl.hidden = false;
+        reasonEl.value = '';
+        await loadList();
+      } catch (err) {
+        if (handleAuth(err)) return;
+        errEl.textContent = err.message || 'Could not block those dates.';
+        errEl.hidden = false;
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Block these dates';
+      }
+    });
+
+    loadList();
   }
 
   // ── Boot ────────────────────────────────────────────────────────────────

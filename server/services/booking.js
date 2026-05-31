@@ -319,6 +319,20 @@ async function getSchedule(dateStr) {
   return { date: toDateOnly(day), bookings };
 }
 
+// All non-cancelled bookings whose [start, end) window overlaps [from, to).
+// Backs the operator calendar; each row carries trailer + customer fields for
+// color-coding and labels.
+async function getBookingsInRange(from, to) {
+  const { rows } = await pool.query(
+    `${OPERATOR_SELECT}
+      WHERE b.status <> 'cancelled'
+        AND b.start_at < $2 AND b.end_at > $1
+      ORDER BY b.start_at, t.name`,
+    [from, to]
+  );
+  return rows;
+}
+
 // Allowed operator status transitions and the timestamp each one stamps.
 const TRANSITIONS = {
   out: { from: UPCOMING_STATUSES, stamp: 'picked_up_at' },        // Mark Picked Up
@@ -416,5 +430,5 @@ async function updateBooking(id, patch, adminUserId) {
 module.exports = {
   createBooking, getById, getByRef, signBooking, markPaidBySession,
   attachCheckoutSession, buildAgreementFor,
-  getDashboard, getSchedule, updateBooking,
+  getDashboard, getSchedule, updateBooking, getBookingsInRange,
 };

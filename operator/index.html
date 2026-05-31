@@ -75,6 +75,14 @@
           </span>
           <span class="nav-chevron" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="nav-item" data-nav="calendar">
+          <span class="nav-icon" aria-hidden="true">🗓️</span>
+          <span class="nav-text">
+            <span class="nav-label">Calendar</span>
+            <span class="nav-sub muted">Month &amp; week · block dates</span>
+          </span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
         <button type="button" class="nav-item" data-nav="inventory">
           <span class="nav-icon" aria-hidden="true">🚚</span>
           <span class="nav-text">
@@ -255,6 +263,109 @@
         <button type="submit" class="btn btn-primary" data-save>Save changes</button>
       </form>
     </main>
+  </template>
+
+  <!-- ── Calendar view ──────────────────────────────────────────────── -->
+  <template id="tpl-calendar">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Calendar</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <div class="card cal-bar">
+        <button type="button" class="btn btn-ghost step" data-prev aria-label="Previous">‹</button>
+        <span class="cal-title" data-title></span>
+        <button type="button" class="btn btn-ghost step" data-next aria-label="Next">›</button>
+      </div>
+
+      <div class="cal-toolbar">
+        <div class="seg" role="group" aria-label="Calendar view mode">
+          <button type="button" class="seg-btn" data-mode="month" aria-pressed="true">Month</button>
+          <button type="button" class="seg-btn" data-mode="week" aria-pressed="false">Week</button>
+        </div>
+        <button type="button" class="btn btn-ghost" data-manage>Manage blackouts</button>
+      </div>
+
+      <p class="error" data-error hidden></p>
+      <p class="empty" data-loading>Loading…</p>
+      <div class="cal-grid" data-grid hidden></div>
+
+      <div class="cal-legend" data-legend hidden>
+        <span><span class="sw sw-book" aria-hidden="true"></span>Booked</span>
+        <span><span class="sw sw-block" aria-hidden="true"></span>Blocked</span>
+      </div>
+
+      <section class="card cal-day-panel" data-day-panel hidden>
+        <div class="status-row">
+          <h2 data-day-title></h2>
+          <button type="button" class="btn btn-ghost" data-block-day>Block</button>
+        </div>
+        <ul class="blackout-list" data-day-blackouts></ul>
+        <ul class="booking-list" data-day-bookings></ul>
+        <p class="empty" data-day-empty hidden>Nothing scheduled this day.</p>
+      </section>
+    </main>
+  </template>
+
+  <!-- ── Blackouts management ───────────────────────────────────────── -->
+  <template id="tpl-blackouts">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Blackouts</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <form class="card detail-form" data-form novalidate>
+        <h2>Block dates</h2>
+        <div class="fields">
+          <div class="field">
+            <label for="bo-trailer">Trailer</label>
+            <select id="bo-trailer" data-trailer>
+              <option value="">All trailers (whole fleet)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bo-start">From</label>
+            <input id="bo-start" type="date" class="date-input" data-start />
+          </div>
+          <div class="field">
+            <label for="bo-end">To</label>
+            <input id="bo-end" type="date" class="date-input" data-end />
+          </div>
+          <div class="field">
+            <label for="bo-reason">Reason (optional)</label>
+            <input id="bo-reason" type="text" data-reason maxlength="200"
+                   placeholder="Maintenance, vacation…" />
+          </div>
+        </div>
+        <p class="error" data-error hidden></p>
+        <p class="saved muted" data-saved hidden>Dates blocked.</p>
+        <button type="submit" class="btn btn-primary" data-save>Block these dates</button>
+      </form>
+
+      <section class="card">
+        <h2>Current blackouts</h2>
+        <p class="empty" data-loading>Loading…</p>
+        <p class="error" data-list-error hidden></p>
+        <ul class="blackout-list" data-list hidden></ul>
+        <p class="empty" data-empty hidden>No blackouts set.</p>
+      </section>
+    </main>
+  </template>
+
+  <!-- A single blackout row (calendar day panel + blackouts list). -->
+  <template id="tpl-blackout-row">
+    <li class="blackout-row">
+      <span class="blackout-meta">
+        <span class="blackout-trailer" data-trailer></span>
+        <span class="blackout-when muted" data-when></span>
+        <span class="blackout-reason muted" data-reason></span>
+      </span>
+      <button type="button" class="btn btn-ghost blackout-del" data-del>Remove</button>
+    </li>
   </template>
 
   <script src="/operator/js/api.js"></script>

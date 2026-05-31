@@ -10,13 +10,19 @@
 //   GET   /api/operator/schedule      chronological bookings for a given day
 //   GET   /api/operator/bookings/:id  one booking, full detail
 //   PATCH /api/operator/bookings/:id  mark picked up / returned, edit notes
+//   GET   /api/operator/calendar      all bookings + blackouts in a date range
+//   GET   /api/operator/blackouts     list blackouts
+//   POST  /api/operator/blackouts     block a date range (one trailer or fleet)
+//   DELETE /api/operator/blackouts/:id  unblock
 //   GET   /api/operator/trailers      full fleet with status, pricing, specs
 //   PATCH /api/operator/trailers/:id  update status / pricing / other fields
 
 const express = require('express');
 const { pool, query } = require('../db');
 const bookingSvc = require('../services/booking');
+const blackoutSvc = require('../services/blackouts');
 const { formatCents } = require('../utils/money');
+const { todayUTC, addDays, parseDateOnly } = require('../utils/date');
 
 const router = express.Router();
 
@@ -147,6 +153,70 @@ router.patch('/bookings/:id', async (req, res, next) => {
   try {
     const booking = await bookingSvc.updateBooking(id, body, req.user.id);
     res.json({ booking: serializeBooking(booking) });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+// GET /api/operator/calendar?from=YYYY-MM-DD&to=YYYY-MM-DD — every booking and
+// blackout overlapping the range, for the month/week calendar. Defaults to a
+// six-week window from today; range width is capped to keep queries bounded.
+const MAX_CALENDAR_DAYS = 366;
+router.get('/calendar', async (req, res, next) => {
+  try {
+    const from = parseDateOnly(req.query.from) || todayUTC();
+    let to = parseDateOnly(req.query.to) || addDays(from, 42);
+    if (to < from) to = from;
+    if ((to - from) / 86400000 > MAX_CALENDAR_DAYS) to = addDays(from, MAX_CALENDAR_DAYS);
+
+    const fromIso = from.toISOString();
+    const toIso = to.toISOString();
+    const [bookings, blackouts] = await Promise.all([
+      bookingSvc.getBookingsInRange(fromIso, toIso),
+      blackoutSvc.getBlackoutsInRange(fromIso, toIso),
+    ]);
+
+    res.json({
+      from: from.toISOString().slice(0, 10),
+      to: to.toISOString().slice(0, 10),
+      bookings: bookings.map(serializeBooking),
+      blackouts,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/operator/blackouts — all blackouts, soonest first.
+router.get('/blackouts', async (req, res, next) => {
+  try {
+    res.json({ blackouts: await blackoutSvc.listBlackouts() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/operator/blackouts — block a date range. Body:
+// { trailer_id?, start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', reason? }.
+// Omit trailer_id (or send null) to block the entire fleet.
+router.post('/blackouts', async (req, res, next) => {
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const blackout = await blackoutSvc.createBlackout(body, req.user.id);
+    res.status(201).json({ blackout });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+// DELETE /api/operator/blackouts/:id — unblock.
+router.delete('/blackouts/:id', async (req, res, next) => {
+  try {
+    const removed = await blackoutSvc.deleteBlackout(req.params.id, req.user.id);
+    if (!removed) return res.status(404).json({ error: 'Blackout not found' });
+    res.json({ ok: true });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
