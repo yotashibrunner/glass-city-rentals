@@ -216,6 +216,34 @@ input:focus-visible {
 .trailer-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trailer-sub { font-size: 0.82rem; }
 
+/* ── Inventory unit counts + on-hold stepper ────────────────────────── */
+.unit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.unit-stats { font-size: 0.82rem; font-weight: 600; }
+.unit-hold { display: inline-flex; align-items: center; gap: 8px; }
+.unit-hold-lbl { font-size: 0.78rem; }
+.unit-hold-val { min-width: 1.2em; text-align: center; font-weight: 700; }
+.unit-step {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.unit-step:active { background: var(--border); }
+.unit-step:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ── Status badge ───────────────────────────────────────────────────── */
 .badge {
   display: inline-block;

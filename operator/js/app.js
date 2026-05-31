@@ -133,7 +133,8 @@
   function fillBookingRow(node, b, onOpen) {
     node.querySelector('[data-customer]').textContent = b.customer_name || '—';
     node.querySelector('[data-trailer]').textContent = b.trailer_name || '';
-    node.querySelector('[data-when]').textContent = fmtRange(b);
+    node.querySelector('[data-when]').textContent =
+      fmtRange(b) + (b.time_fmt ? ` · ${b.time_fmt}` : '');
     node.querySelector('[data-phone]').textContent = b.customer_phone || '';
     paintBookingBadge(node.querySelector('[data-badge]'), b.status);
 
@@ -273,35 +274,37 @@
     const cached = api.auth.user;
     if (cached) welcome.textContent = `Signed in as ${cached.name || cached.email}.`;
 
-    // Paint one dashboard section: fill its list or show the empty message.
+    // Paint one dashboard section: fill its list, or hide the whole section
+    // when it has no items (only non-empty sections show).
     function paintSection(key, bookings) {
+      const sectionEl = root.querySelector(`[data-section="${key}"]`);
       const listEl = root.querySelector(`[data-list="${key}"]`);
-      const emptyEl = root.querySelector(`[data-empty="${key}"]`);
       const countEl = root.querySelector(`[data-count="${key}"]`);
       listEl.replaceChildren();
-      countEl.textContent = bookings.length ? bookings.length : '';
       if (!bookings.length) {
-        emptyEl.hidden = false;
-        listEl.hidden = true;
+        sectionEl.hidden = true;
         return;
       }
-      emptyEl.hidden = true;
-      listEl.hidden = false;
+      sectionEl.hidden = false;
+      countEl.textContent = bookings.length;
       const rowTpl = document.getElementById('tpl-booking-row');
       for (const b of bookings) {
         const node = rowTpl.content.cloneNode(true);
         fillBookingRow(node, b, (bk) => renderBookingDetail(bk.id, renderDashboard));
         listEl.appendChild(node);
       }
+      return bookings.length;
     }
 
     try {
       const data = await api.apiFetch('/api/operator/dashboard');
       const u = data.user || cached || {};
       welcome.textContent = `Signed in as ${u.name || u.email || 'operator'}.`;
-      paintSection('pickups', data.pickups || []);
-      paintSection('returns', data.returns || []);
-      paintSection('active', data.active || []);
+      const keys = ['pickups', 'dropoffs', 'retrievals', 'returns', 'active'];
+      let total = 0;
+      for (const k of keys) total += paintSection(k, data[k] || []) || 0;
+      // When the whole day is empty, show a single friendly line.
+      root.querySelector('[data-dash-empty]').hidden = total > 0;
     } catch (err) {
       if (handleAuth(err)) return;
       errEl.textContent = 'Could not reach the server. Try again when back online.';
@@ -382,17 +385,24 @@
         contractBtn.hidden = true;
       }
 
-      // Action buttons reflect the booking's place in its lifecycle.
+      // Action buttons reflect the booking's place in its lifecycle, labeled
+      // by fulfillment: delivery → Mark Delivered / Mark Retrieved; pickup →
+      // Mark Picked Up / Mark Returned. (Both map to the same out/returned
+      // transitions server-side.) `isDelivery` is already in scope above.
       const pickupBtn = root.querySelector('[data-pickup]');
       const returnBtn = root.querySelector('[data-return]');
       const doneEl = root.querySelector('[data-done]');
       const canPickup = booking.status === 'paid' || booking.status === 'confirmed';
       const canReturn = booking.status === 'out';
+      pickupBtn.textContent = isDelivery ? 'Mark Delivered' : 'Mark Picked Up';
+      returnBtn.textContent = isDelivery ? 'Mark Retrieved' : 'Mark Returned';
       pickupBtn.hidden = !canPickup;
       returnBtn.hidden = !canReturn;
       if (booking.status === 'returned') {
         doneEl.hidden = false;
-        doneEl.textContent = 'Returned — trailer is available again.';
+        doneEl.textContent = isDelivery
+          ? 'Retrieved — unit is available again.'
+          : 'Returned — trailer is available again.';
       } else if (booking.status === 'cancelled') {
         doneEl.hidden = false;
         doneEl.textContent = 'This booking was cancelled.';
@@ -419,6 +429,7 @@
         actionErr.textContent = err.message || 'Could not update. Try again.';
         actionErr.hidden = false;
         btn.disabled = false;
+        paint(); // restore the correct button label
       }
     }
 
@@ -547,6 +558,44 @@
       wireToggle(trailer, badgeEl, toggleEl, errEl);
       openEl.addEventListener('click', () => renderTrailerDetail(trailer));
 
+      // Unit counts + on-hold stepper.
+      const u = trailer.units || {
+        total: trailer.quantity_total ?? 1, on_hold: trailer.quantity_on_hold ?? 0, out: 0,
+        available: Math.max(0, (trailer.quantity_total ?? 1) - (trailer.quantity_on_hold ?? 0)),
+      };
+      const unitsEl = node.querySelector('[data-units]');
+      const holdEl = node.querySelector('[data-hold]');
+      const decBtn = node.querySelector('[data-hold-dec]');
+      const incBtn = node.querySelector('[data-hold-inc]');
+      function paintUnits() {
+        unitsEl.textContent = `Total ${u.total} · Out ${u.out} · Avail ${u.available}`;
+        holdEl.textContent = u.on_hold;
+        decBtn.disabled = u.on_hold <= 0;
+        incBtn.disabled = u.on_hold >= u.total;
+      }
+      paintUnits();
+      async function setHold(next) {
+        next = Math.max(0, Math.min(u.total, next));
+        if (next === u.on_hold) return;
+        decBtn.disabled = incBtn.disabled = true;
+        try {
+          const data = await api.apiFetch(`/api/operator/trailers/${trailer.id}`, {
+            method: 'PATCH', body: JSON.stringify({ quantity_on_hold: next }),
+          });
+          u.on_hold = data.trailer.quantity_on_hold;
+          u.available = Math.max(0, u.total - u.on_hold - u.out);
+          Object.assign(trailer, data.trailer);
+        } catch (err) {
+          if (handleAuth(err)) return;
+          errEl.textContent = err.message || 'Could not update units on hold.';
+          errEl.hidden = false;
+        } finally {
+          paintUnits();
+        }
+      }
+      decBtn.addEventListener('click', () => setHold(u.on_hold - 1));
+      incBtn.addEventListener('click', () => setHold(u.on_hold + 1));
+
       listEl.appendChild(node);
     }
     listEl.hidden = false;
@@ -572,8 +621,15 @@
     { key: 'per_tire_cents', label: 'Per tire ($)', kind: 'money' },
   ];
 
+  const INVENTORY_FIELDS = [
+    { key: 'quantity_total', label: 'Units owned', kind: 'int' },
+    { key: 'quantity_on_hold', label: 'Units on hold (maintenance)', kind: 'int' },
+  ];
+
   function fieldsFor(type) {
-    return COMMON_FIELDS.concat(type === 'dumpster' ? DUMPSTER_FIELDS : TRAILER_FIELDS);
+    return COMMON_FIELDS
+      .concat(type === 'dumpster' ? DUMPSTER_FIELDS : TRAILER_FIELDS)
+      .concat(INVENTORY_FIELDS);
   }
 
   function renderTrailerDetail(trailer) {

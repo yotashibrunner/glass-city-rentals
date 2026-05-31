@@ -26,6 +26,7 @@ const { pool, query } = require('../db');
 const bookingSvc = require('../services/booking');
 const blackoutSvc = require('../services/blackouts');
 const pushSvc = require('../services/push');
+const { OCCUPYING_STATUSES } = require('../services/availability');
 const { formatCents } = require('../utils/money');
 const { todayUTC, addDays, parseDateOnly } = require('../utils/date');
 
@@ -37,7 +38,8 @@ const TRAILER_COLUMNS = [
   'hourly_rate', 'daily_rate', 'weekly_rate', 'monthly_rate',
   'flat_drop_off_cents', 'flat_drop_off_days', 'extra_day_cents', 'per_tire_cents',
   'hitch_requirement', 'plug_requirement', 'specs', 'min_hours',
-  'status', 'display_order', 'active', 'created_at', 'updated_at',
+  'status', 'display_order', 'active', 'quantity_total', 'quantity_on_hold',
+  'created_at', 'updated_at',
 ];
 const SELECT_TRAILER = `SELECT ${TRAILER_COLUMNS.join(', ')} FROM trailers`;
 
@@ -90,6 +92,8 @@ const UPDATABLE = {
   per_tire_cents: nonNegInt,
   min_hours: nonNegInt,
   display_order: nonNegInt,
+  quantity_total: nonNegInt,
+  quantity_on_hold: nonNegInt,
 };
 
 // GET /api/operator/me — echo back the authenticated operator.
@@ -100,12 +104,23 @@ router.get('/me', (req, res) => {
 // Attach formatted dollar strings + a ready-to-use contract PDF link so the PWA
 // doesn't reimplement money math or URL building. contract_url is only set once
 // the agreement is signed (the public PDF route 409s otherwise).
+// The requested time-of-day from start_at (stored as wall-clock UTC). Midnight
+// means no specific time was chosen, so we return null.
+function fmtTime(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) return null;
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+}
+
 function serializeBooking(b) {
   return {
     ...b,
     total_fmt: formatCents(b.total_cents),
     amount_paid_fmt: formatCents(b.amount_paid_cents),
     delivery_fee_fmt: formatCents(b.delivery_fee_cents),
+    time_fmt: fmtTime(b.start_at),
     contract_url: b.contract_signed_at ? `/api/bookings/${b.ref_code}/contract.pdf` : null,
   };
 }
@@ -113,10 +128,12 @@ function serializeBooking(b) {
 // GET /api/operator/dashboard — today's pickups, returns, and active rentals.
 router.get('/dashboard', async (req, res, next) => {
   try {
-    const { pickups, returns, active } = await bookingSvc.getDashboard();
+    const { pickups, dropoffs, retrievals, returns, active } = await bookingSvc.getDashboard();
     res.json({
       user: req.user,
       pickups: pickups.map(serializeBooking),
+      dropoffs: dropoffs.map(serializeBooking),
+      retrievals: retrievals.map(serializeBooking),
       returns: returns.map(serializeBooking),
       active: active.map(serializeBooking),
     });
@@ -290,13 +307,30 @@ router.post('/push/test', async (req, res, next) => {
   }
 });
 
-// GET /api/operator/trailers — the full fleet, ordered for display.
+// GET /api/operator/trailers — the full fleet, ordered for display, with live
+// unit counts: out (currently rented), on_hold, and available.
 router.get('/trailers', async (req, res, next) => {
   try {
-    const { rows } = await query(
-      `${SELECT_TRAILER} ORDER BY display_order, name`
+    const { rows } = await query(`${SELECT_TRAILER} ORDER BY display_order, name`);
+
+    // Units currently out = occupying bookings whose window spans right now,
+    // counted per trailer in one pass.
+    const counts = await query(
+      `SELECT trailer_id, count(*)::int AS n FROM bookings
+        WHERE status = ANY($1) AND start_at <= NOW() AND end_at > NOW()
+        GROUP BY trailer_id`,
+      [OCCUPYING_STATUSES]
     );
-    res.json({ trailers: rows });
+    const outById = Object.fromEntries(counts.rows.map((r) => [r.trailer_id, r.n]));
+
+    const trailers = rows.map((t) => {
+      const total = t.quantity_total ?? 1;
+      const onHold = t.quantity_on_hold ?? 0;
+      const out = outById[t.id] || 0;
+      const available = Math.max(0, total - onHold - out);
+      return { ...t, units: { total, on_hold: onHold, out, available } };
+    });
+    res.json({ trailers });
   } catch (err) {
     next(err);
   }

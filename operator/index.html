@@ -106,22 +106,31 @@
         <p class="error" data-notif-error hidden></p>
       </section>
 
-      <section class="card">
-        <h2>Today's Schedule <span class="count" data-count="pickups"></span></h2>
+      <p class="empty" data-dash-empty hidden>Nothing scheduled today, and nothing out.</p>
+
+      <section class="card" data-section="pickups" hidden>
+        <h2>Pickups Today <span class="count" data-count="pickups"></span></h2>
         <ul class="booking-list" data-list="pickups"></ul>
-        <p class="empty" data-empty="pickups">Nothing scheduled today.</p>
       </section>
 
-      <section class="card">
-        <h2>Today's Returns <span class="count" data-count="returns"></span></h2>
+      <section class="card" data-section="dropoffs" hidden>
+        <h2>Deliveries — Drop-offs Today <span class="count" data-count="dropoffs"></span></h2>
+        <ul class="booking-list" data-list="dropoffs"></ul>
+      </section>
+
+      <section class="card" data-section="retrievals" hidden>
+        <h2>Deliveries — Retrievals Today <span class="count" data-count="retrievals"></span></h2>
+        <ul class="booking-list" data-list="retrievals"></ul>
+      </section>
+
+      <section class="card" data-section="returns" hidden>
+        <h2>Returns Today <span class="count" data-count="returns"></span></h2>
         <ul class="booking-list" data-list="returns"></ul>
-        <p class="empty" data-empty="returns">Nothing due back today.</p>
       </section>
 
-      <section class="card">
-        <h2>Active Now <span class="count" data-count="active"></span></h2>
+      <section class="card" data-section="active" hidden>
+        <h2>Active Rentals <span class="count" data-count="active"></span></h2>
         <ul class="booking-list" data-list="active"></ul>
-        <p class="empty" data-empty="active">No trailers currently out.</p>
       </section>
     </main>
   </template>
@@ -245,6 +254,15 @@
         </span>
         <span class="badge" data-badge></span>
       </button>
+      <div class="unit-bar">
+        <span class="unit-stats" data-units></span>
+        <span class="unit-hold">
+          <span class="unit-hold-lbl muted">On hold</span>
+          <button type="button" class="unit-step" data-hold-dec aria-label="Decrease units on hold">−</button>
+          <span class="unit-hold-val" data-hold>0</span>
+          <button type="button" class="unit-step" data-hold-inc aria-label="Increase units on hold">+</button>
+        </span>
+      </div>
       <button type="button" class="btn btn-toggle" data-toggle></button>
     </li>
   </template>

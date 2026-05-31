@@ -74,6 +74,17 @@ async function createBooking(input) {
   if (trailer.status !== 'available') throw badRequest('This item is currently unavailable.', 409);
 
   const { start, end, periodType, quantity } = resolveWindow(trailer, input);
+
+  // Requested pickup/delivery time-of-day (HH:MM), stored as wall-clock UTC on
+  // the start date. The date-based [start, end) window still drives availability.
+  let startAt = start;
+  const tm = /^(\d{1,2}):(\d{2})$/.exec(String(input.start_time || '').trim());
+  if (tm) {
+    const h = Math.min(23, parseInt(tm[1], 10));
+    const m = Math.min(59, parseInt(tm[2], 10));
+    startAt = new Date(start.getTime() + h * 3600000 + m * 60000);
+  }
+
   const quote = await computeQuote(trailer, {
     period_type: periodType,
     start_at: input.start_at,
@@ -103,19 +114,29 @@ async function createBooking(input) {
   try {
     await client.query('BEGIN');
 
-    // Re-check availability against other occupying bookings + blackouts.
-    const conflict = await client.query(
-      `SELECT 1 FROM bookings
-        WHERE trailer_id = $1 AND status = ANY($2)
-          AND start_at < $4 AND end_at > $3
-        UNION ALL
-        SELECT 1 FROM blackouts
+    // Re-check availability. A blackout closes all units for the range; past
+    // that, a unit must be free for the whole window — i.e. fewer than
+    // capacity (= quantity_total - quantity_on_hold) occupying bookings overlap.
+    const startIso = start.toISOString();
+    const endIso = end.toISOString();
+    const blackout = await client.query(
+      `SELECT 1 FROM blackouts
         WHERE (trailer_id = $1 OR trailer_id IS NULL)
-          AND start_at < $4 AND end_at > $3
+          AND start_at < $3 AND end_at > $2
         LIMIT 1`,
-      [trailer.id, OCCUPYING_STATUSES, start.toISOString(), end.toISOString()]
+      [trailer.id, startIso, endIso]
     );
-    if (conflict.rows.length) {
+    if (blackout.rows.length) {
+      throw badRequest('Those dates are blocked. Please pick another range.', 409);
+    }
+    const cap = Math.max(0, (trailer.quantity_total ?? 1) - (trailer.quantity_on_hold ?? 0));
+    const overlap = await client.query(
+      `SELECT count(*)::int AS n FROM bookings
+        WHERE trailer_id = $1 AND status = ANY($2)
+          AND start_at < $4 AND end_at > $3`,
+      [trailer.id, OCCUPYING_STATUSES, startIso, endIso]
+    );
+    if (overlap.rows[0].n >= cap) {
       throw badRequest('Those dates are no longer available. Please pick another range.', 409);
     }
 
@@ -133,7 +154,7 @@ async function createBooking(input) {
               customer_notes, status, fulfillment, delivery_address, delivery_fee_cents)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,$15,$16)
            RETURNING id, ref_code`,
-          [ref, trailer.id, customerId, start.toISOString(), end.toISOString(), periodType, quantity,
+          [ref, trailer.id, customerId, startAt.toISOString(), end.toISOString(), periodType, quantity,
             tireCount, baseAmount, extraCharges, quote.tax_cents, totalCents,
             (input.notes || '').trim() || null, fulfillment, deliveryAddress, deliveryFee]
         );
@@ -275,23 +296,29 @@ async function getDashboard() {
   const t0 = today.toISOString();
   const t1 = tomorrow.toISOString();
 
-  // Pickups today: confirmed rentals whose window starts within today and that
-  // haven't been picked up yet.
-  const pickups = await pool.query(
+  // Upcoming-but-not-yet-out rentals starting today, split by fulfillment:
+  //   pickup   → customer comes to the lot       (Pickups Today)
+  //   delivery → operator drives the trailer out (Deliveries — Drop-offs Today)
+  const startingToday = await pool.query(
     `${OPERATOR_SELECT}
       WHERE b.status = ANY($1) AND b.start_at >= $2 AND b.start_at < $3
       ORDER BY b.start_at, t.name`,
     [UPCOMING_STATUSES, t0, t1]
   );
+  const pickups = startingToday.rows.filter((b) => b.fulfillment !== 'delivery');
+  const dropoffs = startingToday.rows.filter((b) => b.fulfillment === 'delivery');
 
-  // Returns today: rentals currently out whose (exclusive) end is on or before
-  // tomorrow's midnight — i.e. due back today, including anything overdue.
-  const returns = await pool.query(
+  // Out rentals due back today (or overdue), split by fulfillment:
+  //   pickup   → customer brings it to the lot (Returns Today)
+  //   delivery → operator goes to collect it   (Deliveries — Retrievals Today)
+  const dueToday = await pool.query(
     `${OPERATOR_SELECT}
       WHERE b.status = 'out' AND b.end_at <= $1
       ORDER BY b.end_at, t.name`,
     [t1]
   );
+  const returns = dueToday.rows.filter((b) => b.fulfillment !== 'delivery');
+  const retrievals = dueToday.rows.filter((b) => b.fulfillment === 'delivery');
 
   // Active now: everything currently out, soonest-due first.
   const active = await pool.query(
@@ -300,7 +327,9 @@ async function getDashboard() {
       ORDER BY b.end_at, t.name`
   );
 
-  return { pickups: pickups.rows, returns: returns.rows, active: active.rows };
+  return {
+    pickups, dropoffs, retrievals, returns, active: active.rows,
+  };
 }
 
 // All bookings touching a given 'YYYY-MM-DD' date, chronological. A booking is

@@ -92,6 +92,7 @@ const TRAILERS = [
     plug_requirement: null,
     description: 'Drop-off & pickup included. 3 days included, $25/extra day, $3/tire if tires found.',
     display_order: 5,
+    quantity_total: 9, // they own nine 25-yard bins
   },
 ];
 
@@ -100,12 +101,14 @@ const UPSERT = `
     slug, name, type, size_label, description, photo_url,
     hourly_rate, daily_rate, weekly_rate, monthly_rate,
     flat_drop_off_cents, flat_drop_off_days, extra_day_cents, per_tire_cents,
-    hitch_requirement, plug_requirement, min_hours, display_order, specs
+    hitch_requirement, plug_requirement, min_hours, display_order, specs,
+    quantity_total
   ) VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
     $11, $12, $13, $14,
-    $15, $16, $17, $18, $19::jsonb
+    $15, $16, $17, $18, $19::jsonb,
+    $20
   )
   ON CONFLICT (slug) DO UPDATE SET
     name = EXCLUDED.name,
@@ -126,6 +129,7 @@ const UPSERT = `
     min_hours = EXCLUDED.min_hours,
     display_order = EXCLUDED.display_order,
     specs = EXCLUDED.specs,
+    quantity_total = EXCLUDED.quantity_total,
     updated_at = NOW()
 `;
 
@@ -151,6 +155,7 @@ async function main() {
       t.min_hours ?? null,
       t.display_order ?? 0,
       JSON.stringify(t.specs ?? []),
+      t.quantity_total ?? 1,
     ]);
     console.log(`  ✓ ${t.slug} — ${t.name}`);
   }

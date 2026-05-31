@@ -56,6 +56,14 @@
             <div><label class="fl" for="phone">Phone <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label><input type="text" id="phone" inputmode="tel" autocomplete="tel" required aria-required="true" /></div>
             <div><label class="fl" for="email">Email</label><input type="text" id="email" inputmode="email" autocomplete="email" /></div>
           </div>
+
+          <div class="step"><label class="fl" for="startTime" style="margin:0;"><%= isDumpster ? 'Requested drop-off time' : 'Requested pickup / delivery time' %></label></div>
+          <div class="field-row">
+            <div>
+              <input type="time" id="startTime" />
+              <p class="qnote" style="margin-top:6px;">Business hours 7am–7pm. We'll confirm the exact time.</p>
+            </div>
+          </div>
 <% if (!isDumpster) { %>
           <div class="step">Fulfillment</div>
           <div role="radiogroup" aria-label="Fulfillment" style="display:flex;flex-direction:column;gap:8px;">
@@ -134,6 +142,7 @@
             body: JSON.stringify(Object.assign({}, sel, {
               customer: { name: name, phone: phone, email: el('email').value.trim() },
               notes: el('notes').value.trim(),
+              start_time: el('startTime').value || null,
               fulfillment: ful,
               delivery_address: ful === 'delivery' ? address : null,
             })),

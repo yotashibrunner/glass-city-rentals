@@ -92,7 +92,7 @@ router.get('/trailers/:slug/availability', async (req, res, next) => {
     if (trailer.status !== 'available') {
       busy = [{ start_at: from.toISOString(), end_at: to.toISOString(), reason: 'out_of_service' }];
     } else {
-      busy = await getBusyRanges(trailer.id, from.toISOString(), to.toISOString());
+      busy = await getBusyRanges(trailer, from.toISOString(), to.toISOString());
     }
 
     res.json({
