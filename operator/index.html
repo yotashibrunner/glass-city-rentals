@@ -107,7 +107,7 @@
       </section>
 
       <section class="card">
-        <h2>Today's Pickups <span class="count" data-count="pickups"></span></h2>
+        <h2>Today's Schedule <span class="count" data-count="pickups"></span></h2>
         <ul class="booking-list" data-list="pickups"></ul>
         <p class="empty" data-empty="pickups">Nothing scheduled today.</p>
       </section>
@@ -134,9 +134,11 @@
         <span class="booking-meta">
           <span class="booking-name" data-customer></span>
           <span class="booking-sub muted" data-trailer></span>
+          <span class="booking-sub muted" data-address hidden></span>
           <span class="booking-sub muted" data-when></span>
         </span>
         <span class="booking-tail">
+          <span class="badge badge-fulfillment" data-fulfillment></span>
           <span class="badge" data-badge></span>
           <span class="booking-phone muted" data-phone></span>
         </span>
@@ -171,6 +173,8 @@
         <section class="card">
           <dl class="kv">
             <div><dt>Trailer</dt><dd data-trailer></dd></div>
+            <div><dt>Fulfillment</dt><dd data-fulfillment></dd></div>
+            <div data-address-row hidden><dt>Delivery address</dt><dd data-address></dd></div>
             <div><dt>Pickup</dt><dd data-start></dd></div>
             <div><dt>Return</dt><dd data-end></dd></div>
             <div><dt>Total paid</dt><dd data-paid></dd></div>

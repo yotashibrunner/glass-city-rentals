@@ -32,16 +32,24 @@ function buildAgreement({ booking, trailer, customer }) {
     ? `Roll-off drop-off (${booking.quantity || 0} extra day${booking.quantity === 1 ? '' : 's'} beyond included)`
     : `${booking.quantity} ${booking.period_type}${booking.quantity === 1 ? '' : 's'}`;
 
+  const isDelivery = booking.fulfillment === 'delivery';
   const summary = [
     { label: 'Reference', value: booking.ref_code },
     { label: 'Renter', value: customer.name },
     { label: 'Contact', value: `${customer.phone}${customer.email ? ' · ' + customer.email : ''}` },
     { label: 'Equipment', value: `${trailer.name}${trailer.size_label ? ' (' + trailer.size_label + ')' : ''}` },
+    { label: 'Fulfillment', value: isDelivery ? 'Delivery' : 'Customer pickup' },
+    ...(isDelivery && booking.delivery_address
+      ? [{ label: 'Delivery address', value: booking.delivery_address }]
+      : []),
     { label: isDumpster ? 'Drop-off' : 'Pickup', value: fmtDate(booking.start_at) },
     { label: isDumpster ? 'Scheduled pickup' : 'Return', value: fmtDate(booking.end_at) },
     { label: 'Rental term', value: periodLabel },
     { label: 'Subtotal', value: formatCents(booking.base_amount_cents + (booking.extra_charges_cents || 0)) },
     { label: 'Tax', value: formatCents(booking.tax_cents) },
+    ...(booking.delivery_fee_cents > 0
+      ? [{ label: 'Delivery fee', value: formatCents(booking.delivery_fee_cents) }]
+      : []),
     { label: 'Total due', value: formatCents(booking.total_cents) },
   ];
 

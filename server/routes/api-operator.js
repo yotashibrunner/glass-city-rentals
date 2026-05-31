@@ -105,6 +105,7 @@ function serializeBooking(b) {
     ...b,
     total_fmt: formatCents(b.total_cents),
     amount_paid_fmt: formatCents(b.amount_paid_cents),
+    delivery_fee_fmt: formatCents(b.delivery_fee_cents),
     contract_url: b.contract_signed_at ? `/api/bookings/${b.ref_code}/contract.pdf` : null,
   };
 }

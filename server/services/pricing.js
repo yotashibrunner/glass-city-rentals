@@ -22,6 +22,10 @@ const PERIOD_COLUMN = {
 };
 const PERIOD_NOUN = { hour: 'hour', day: 'day', week: 'week', month: 'month' };
 
+// Flat local-delivery fee (cents). Pickup is free. Added on top of base + tax
+// when the customer chooses delivery.
+const DELIVERY_FEE_CENTS = 6000; // $60
+
 function badRequest(message) {
   const err = new Error(message);
   err.status = 400;
@@ -105,4 +109,4 @@ async function computeQuote(trailer, input) {
   };
 }
 
-module.exports = { computeQuote };
+module.exports = { computeQuote, DELIVERY_FEE_CENTS };

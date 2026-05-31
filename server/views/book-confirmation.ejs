@@ -34,6 +34,10 @@
         <div class="quote" style="border-top:0;padding-top:0;">
           <div class="qrow"><span>Status</span><span style="color:<%= paid ? 'var(--green)' : 'var(--hazard)' %>"><%= statusLabel %></span></div>
           <div class="qrow"><span>Equipment</span><span><%= booking.trailer_name %></span></div>
+          <div class="qrow"><span>Fulfillment</span><span><%= booking.fulfillment === 'delivery' ? 'Delivery' : 'Customer pickup' %></span></div>
+          <% if (booking.fulfillment === 'delivery' && booking.delivery_address) { %>
+          <div class="qrow"><span>Address</span><span><%= booking.delivery_address %></span></div>
+          <% } %>
           <div class="qrow"><span><%= booking.trailer_type === 'dumpster' ? 'Drop-off' : 'Pickup' %></span><span><%= new Date(booking.start_at).toLocaleDateString('en-US', { timeZone:'UTC', month:'short', day:'numeric', year:'numeric' }) %></span></div>
           <div class="qrow"><span><%= booking.trailer_type === 'dumpster' ? 'Pickup' : 'Return' %></span><span><%= new Date(booking.end_at).toLocaleDateString('en-US', { timeZone:'UTC', month:'short', day:'numeric', year:'numeric' }) %></span></div>
           <div class="qtotal">
@@ -42,9 +46,15 @@
           </div>
         </div>
 
+        <% if (booking.fulfillment === 'delivery') { %>
+        <p class="qnote" style="margin-top:16px;">
+          We’ll deliver to <strong><%= booking.delivery_address %></strong> and pick it back up. We’ll call to confirm a time window.
+        </p>
+        <% } else { %>
         <p class="qnote" style="margin-top:16px;">
           Pickup at <strong>2004 Front Street, Toledo, OH 43605</strong> (7am–7pm). Bring a properly rated tow vehicle and connections.
         </p>
+        <% } %>
 
         <% if (signed) { %>
           <a class="btn btn-ghost" href="/api/bookings/<%= booking.ref_code %>/contract.pdf" target="_blank" rel="noopener" style="margin-top:14px;">Download Signed Agreement (PDF)</a>

@@ -136,6 +136,18 @@
     node.querySelector('[data-when]').textContent = fmtRange(b);
     node.querySelector('[data-phone]').textContent = b.customer_phone || '';
     paintBookingBadge(node.querySelector('[data-badge]'), b.status);
+
+    // PICKUP / DELIVERY badge (+ address line for deliveries).
+    const isDelivery = b.fulfillment === 'delivery';
+    const fb = node.querySelector('[data-fulfillment]');
+    fb.textContent = isDelivery ? 'Delivery' : 'Pickup';
+    fb.classList.add(isDelivery ? 'badge-delivery' : 'badge-pickup');
+    const addr = node.querySelector('[data-address]');
+    if (isDelivery && b.delivery_address) {
+      addr.textContent = `📍 ${b.delivery_address}`;
+      addr.hidden = false;
+    }
+
     const stripe = node.querySelector('[data-stripe]');
     stripe.style.background = `hsl(${trailerHue(b.trailer_slug || b.trailer_name)} 55% 50%)`;
     node.querySelector('[data-open]').addEventListener('click', () => onOpen(b));
@@ -333,6 +345,18 @@
 
       const trailerLine = [booking.trailer_name, booking.size_label].filter(Boolean).join(' · ');
       root.querySelector('[data-trailer]').textContent = trailerLine;
+
+      const isDelivery = booking.fulfillment === 'delivery';
+      root.querySelector('[data-fulfillment]').textContent = isDelivery
+        ? `Delivery (${booking.delivery_fee_fmt || '$60'})` : 'Customer pickup';
+      const addrRow = root.querySelector('[data-address-row]');
+      if (isDelivery && booking.delivery_address) {
+        addrRow.hidden = false;
+        root.querySelector('[data-address]').textContent = booking.delivery_address;
+      } else {
+        addrRow.hidden = true;
+      }
+
       root.querySelector('[data-start]').textContent = fmtDay(booking.start_at);
       root.querySelector('[data-end]').textContent = fmtReturnDay(booking.end_at);
       root.querySelector('[data-paid]').textContent =

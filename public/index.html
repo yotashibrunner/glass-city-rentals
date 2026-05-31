@@ -1090,10 +1090,10 @@
     </a>
     <div class="nav-links">
       <a href="#fleet">Fleet</a>
-      <a href="#quote">Get Quote</a>
+      <a href="/fleet">Get Quote</a>
       <a href="#service">Service Area</a>
       <a href="#contact">Contact</a>
-      <a class="nav-cta" href="#quote">
+      <a class="nav-cta" href="/fleet">
         Build a Quote
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
       </a>
@@ -1122,7 +1122,7 @@
         Bowling Green &amp; Southeast Michigan.
       </p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="#quote">
+        <a class="btn btn-primary" href="/fleet">
           Build a Quote
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
         </a>
@@ -1348,109 +1348,6 @@
   </div>
 </section>
 
-<!-- =================== QUOTE BUILDER =================== -->
-<section id="quote">
-  <div class="container">
-    <div class="section-head reveal">
-      <div>
-        <div class="eyebrow">02 — Estimate</div>
-        <h2 class="display">Build Your Quote</h2>
-      </div>
-      <p>Pick a trailer, set the duration, and we'll calculate a live estimate. Send it and we'll confirm by phone or email.</p>
-    </div>
-
-    <div class="quote-grid">
-      <!-- Form -->
-      <form class="quote-form reveal" id="quoteForm" novalidate>
-        <div class="field">
-          <span class="field-lbl" id="trailerPickerLabel">Step 1 — Select Trailer <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></span>
-          <div class="trailer-picker" id="trailerPicker" role="group" aria-labelledby="trailerPickerLabel"></div>
-        </div>
-
-        <div class="field" id="periodField">
-          <span class="field-lbl" id="periodLabel">Step 2 — Rental Period</span>
-          <div class="seg" id="periodSeg" role="radiogroup" aria-labelledby="periodLabel">
-            <input type="radio" name="period" id="p-hour" value="hour" checked />
-            <label for="p-hour">Hour</label>
-            <input type="radio" name="period" id="p-day" value="day" />
-            <label for="p-day">Day</label>
-            <input type="radio" name="period" id="p-week" value="week" />
-            <label for="p-week">Week</label>
-            <input type="radio" name="period" id="p-month" value="month" />
-            <label for="p-month">Month</label>
-          </div>
-        </div>
-
-        <div class="field" id="qtyField">
-          <label class="field-lbl" id="qtyLabel" for="qty">Step 3 — How Many Hours? (2 hr minimum)</label>
-          <input type="number" id="qty" min="1" value="2" />
-        </div>
-
-        <!-- 25-Yarder special inputs (shown only when roll25 selected) -->
-        <div class="field" id="roll25Fields" style="display:none;">
-          <label class="field-lbl" for="extraDays">Step 2 — Extra Days Beyond 3 Included</label>
-          <input type="number" id="extraDays" min="0" value="0" placeholder="0 = just 3-day drop-off" />
-          <label class="field-lbl" style="margin-top:18px;" for="tireCount">Tires (if any)</label>
-          <input type="number" id="tireCount" min="0" value="0" />
-          <p class="qs-note" style="margin-top:8px;">Tires are prohibited but charged at $3 each if found in the bin.</p>
-        </div>
-
-        <div class="field">
-          <span class="field-lbl">Your Info <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></span>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <label class="sr-only" for="qName">Full name</label>
-            <input type="text" id="qName" placeholder="Full name" required aria-required="true" />
-            <label class="sr-only" for="qPhone">Phone</label>
-            <input type="tel" id="qPhone" placeholder="Phone" required aria-required="true" />
-          </div>
-          <label class="sr-only" for="qEmail">Email (optional)</label>
-          <input type="email" id="qEmail" placeholder="Email (optional)" style="margin-top:12px;" />
-        </div>
-
-        <div class="field">
-          <label class="field-lbl" for="qNotes">Pickup Date &amp; Notes</label>
-          <textarea id="qNotes" placeholder="When do you need it? Any questions about the trailer, hitch, or delivery?"></textarea>
-        </div>
-
-        <button class="btn btn-primary btn-block" id="sendQuote" type="button">
-          Send My Quote Request
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
-        <p class="qs-note" style="text-align:center; margin-top:14px;">
-          Opens your email app pre-filled — or call (419) 654-3584
-        </p>
-      </form>
-
-      <!-- Live summary -->
-      <aside class="quote-summary reveal" aria-live="polite" aria-label="Live quote estimate">
-        <div class="qs-head">
-          <div>
-            <div class="eyebrow">Live Estimate</div>
-            <div style="font-family:'Anton',sans-serif; font-size:22px; margin-top:6px; text-transform:uppercase;">Quote Builder</div>
-          </div>
-          <div class="qs-id" id="qsId">#GCT-0000</div>
-        </div>
-
-        <div class="qs-row"><span>Trailer</span><span id="qsTrailer">—</span></div>
-        <div class="qs-row"><span>Period</span><span id="qsPeriod">—</span></div>
-        <div class="qs-row"><span>Quantity</span><span id="qsQty">—</span></div>
-        <div class="qs-row"><span>Rate</span><span id="qsRate">—</span></div>
-        <div class="qs-row" id="qsMinRow" style="display:none;"><span>2-hr Minimum</span><span>Applied</span></div>
-        <div class="qs-row" id="qsTiresRow" style="display:none;"><span>Tires</span><span id="qsTires">—</span></div>
-
-        <div class="qs-total">
-          <span class="lbl">Estimate</span>
-          <span class="val" id="qsTotal">$0</span>
-        </div>
-
-        <p class="qs-note">
-          Estimate only. Final price may vary based on hitch, deposit, fuel, and add-ons. A team member will confirm by phone before your pickup.
-        </p>
-      </aside>
-    </div>
-  </div>
-</section>
-
 <!-- =================== SERVICE AREA =================== -->
 <section id="service">
   <div class="container">
@@ -1611,281 +1508,11 @@
   </div>
 </footer>
 
-<div class="toast" id="toast" role="status" aria-live="polite">Quote prepared — opening your email</div>
-
 <script>
-  // ---------- Fleet data ----------
-  const FLEET = {
-    'car-hauler': {
-      name: '7×20 Car Hauler / Equipment',
-      photo: 'images/trailer-car-hauler.jpg',
-      hour: 25, day: 120, week: 600, month: 1800,
-      reqs: '2 5/16" ball · 7-pin plug',
-      minHours: 2
-    },
-    'enclosed': {
-      name: '6×12 Enclosed Cargo',
-      photo: 'images/trailer-enclosed.jpg',
-      hour: 20, day: 75, week: 350, month: 1100,
-      reqs: '2" ball · 4-pin plug',
-      minHours: 2
-    },
-    'dump': {
-      name: '7×16×4 Dump Trailer (17 yd)',
-      photo: 'images/trailer-dump.jpg',
-      hour: 30, day: 150, week: 650, month: 1950,
-      reqs: '2 5/16" ball · 7-pin plug',
-      minHours: 2
-    },
-    'utility': {
-      name: '6×12 Utility Trailer',
-      photo: 'images/trailer-utility.jpg',
-      hour: null, day: 50, week: 250, month: 750,
-      reqs: '2" ball · 4-pin plug',
-      minHours: null
-    },
-    'roll25': {
-      name: '25-Yard Roll-Off Bin',
-      photo: 'images/trailer-25yard.jpg',
-      special: true,
-      basePrice: 420,
-      daysIncluded: 3,
-      extraDayRate: 25,
-      tireRate: 3,
-      reqs: 'Drop-off & pickup included',
-      minHours: null
-    }
-  };
-
-  const state = {
-    trailer: 'car-hauler',
-    period: 'hour',
-    qty: 2,
-    extraDays: 0,
-    tires: 0
-  };
-
-  // ---------- Build trailer picker ----------
-  const picker = document.getElementById('trailerPicker');
-  Object.entries(FLEET).forEach(([key, t]) => {
-    let rate, sub;
-    if (t.special) {
-      rate = '$' + t.basePrice + ' drop';
-      sub = '3 days incl. · $25/extra day';
-    } else {
-      rate = t.hour ? '$' + t.hour + '/hr'
-            : t.day ? '$' + t.day + '/day'
-            : '$' + t.week + '/wk';
-      sub = [t.hour && '$'+t.hour+'/hr', t.day && '$'+t.day+'/day', t.week && '$'+t.week+'/wk', t.month && '$'+t.month+'/mo']
-            .filter(Boolean).join(' · ');
-    }
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'trailer-opt' + (key === state.trailer ? ' selected' : '');
-    el.dataset.key = key;
-    el.setAttribute('aria-pressed', key === state.trailer ? 'true' : 'false');
-    el.innerHTML = `
-      <div class="trailer-opt-thumb"><img src="${t.photo}" alt="" loading="lazy" /></div>
-      <div>
-        <div class="opt-name">${t.name}</div>
-        <div class="opt-sub">${sub}</div>
-      </div>
-      <div class="opt-rate">${rate}</div>
-    `;
-    el.addEventListener('click', () => selectTrailer(key));
-    picker.appendChild(el);
-  });
-
-  function selectTrailer(key) {
-    state.trailer = key;
-    document.querySelectorAll('.trailer-opt').forEach(el => {
-      const on = el.dataset.key === key;
-      el.classList.toggle('selected', on);
-      el.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    const t = FLEET[key];
-
-    // Toggle special UI for roll25
-    const isSpecial = !!t.special;
-    document.getElementById('periodField').style.display = isSpecial ? 'none' : '';
-    document.getElementById('qtyField').style.display = isSpecial ? 'none' : '';
-    document.getElementById('roll25Fields').style.display = isSpecial ? '' : 'none';
-    document.getElementById('qsTiresRow').style.display = isSpecial ? '' : 'none';
-
-    if (!isSpecial) {
-      // Update period radio availability
-      ['hour','day','week','month'].forEach(p => {
-        const r = document.getElementById('p-'+p);
-        r.disabled = (t[p] == null);
-      });
-      // If current period is disabled, pick first available
-      if (t[state.period] == null) {
-        const fallback = ['hour','day','week','month'].find(p => t[p] != null);
-        if (fallback) {
-          state.period = fallback;
-          document.getElementById('p-'+fallback).checked = true;
-        }
-      }
-      syncMinQty();
-    }
-    updateQuote();
-  }
-
-  document.querySelectorAll('input[name="period"]').forEach(r => {
-    r.addEventListener('change', () => {
-      state.period = r.value;
-      syncMinQty();
-      updateQuote();
-    });
-  });
-
-  function syncMinQty() {
-    const lbl = document.getElementById('qtyLabel');
-    const qty = document.getElementById('qty');
-    if (state.period === 'hour') {
-      lbl.textContent = 'Step 3 — How Many Hours? (2 hr minimum)';
-      if (qty.value < 2) qty.value = 2;
-    } else if (state.period === 'day') {
-      lbl.textContent = 'Step 3 — How Many Days?';
-      if (qty.value < 1) qty.value = 1;
-    } else if (state.period === 'week') {
-      lbl.textContent = 'Step 3 — How Many Weeks?';
-      if (qty.value < 1) qty.value = 1;
-    } else {
-      lbl.textContent = 'Step 3 — How Many Months?';
-      if (qty.value < 1) qty.value = 1;
-    }
-    state.qty = parseFloat(qty.value) || 1;
-  }
-
-  document.getElementById('qty').addEventListener('input', e => {
-    state.qty = parseFloat(e.target.value) || 0;
-    updateQuote();
-  });
-  document.getElementById('extraDays').addEventListener('input', e => {
-    state.extraDays = parseInt(e.target.value) || 0;
-    updateQuote();
-  });
-  document.getElementById('tireCount').addEventListener('input', e => {
-    state.tires = parseInt(e.target.value) || 0;
-    updateQuote();
-  });
-
-  function calcQuote() {
-    const t = FLEET[state.trailer];
-    if (t.special) {
-      const base = t.basePrice;
-      const extraCost = state.extraDays * t.extraDayRate;
-      const tireCost = state.tires * t.tireRate;
-      return {
-        rate: t.basePrice,
-        qty: 3 + state.extraDays,
-        total: base + extraCost + tireCost,
-        minApplied: false,
-        special: true,
-        extraDays: state.extraDays,
-        tires: state.tires,
-        tireCost
-      };
-    }
-    const rate = t[state.period];
-    if (!rate) return { rate: null, qty: state.qty, total: null, minApplied: false };
-    let qty = state.qty;
-    let minApplied = false;
-    if (state.period === 'hour' && qty < 2) { qty = 2; minApplied = true; }
-    return { rate, qty, total: rate * qty, minApplied };
-  }
-
-  function updateQuote() {
-    const t = FLEET[state.trailer];
-    const q = calcQuote();
-
-    document.getElementById('qsTrailer').textContent = t.name;
-
-    if (q.special) {
-      document.getElementById('qsPeriod').textContent = 'Roll-Off Drop-Off';
-      document.getElementById('qsQty').textContent = q.qty + ' day' + (q.qty === 1 ? '' : 's') + ' total';
-      document.getElementById('qsRate').textContent = '$' + t.basePrice + ' + $' + t.extraDayRate + '/extra day';
-      document.getElementById('qsTires').textContent = q.tires > 0 ? q.tires + ' × $3 = $' + q.tireCost : 'None';
-      document.getElementById('qsMinRow').style.display = 'none';
-    } else {
-      document.getElementById('qsPeriod').textContent = state.period === 'hour' ? 'Hourly' : state.period === 'day' ? 'Daily' : state.period === 'week' ? 'Weekly' : 'Monthly';
-      const unit = state.period === 'hour' ? 'hr' : state.period === 'day' ? 'day' : state.period === 'week' ? 'wk' : 'mo';
-      document.getElementById('qsQty').textContent = q.qty + ' ' + unit + (q.qty === 1 ? '' : 's');
-      document.getElementById('qsRate').textContent = q.rate ? '$' + q.rate + ' / ' + state.period : 'Call';
-      document.getElementById('qsMinRow').style.display = q.minApplied ? '' : 'none';
-    }
-
-    document.getElementById('qsTotal').textContent = q.total != null ? '$' + q.total.toFixed(0) : 'Call';
-
-    const fleetKeys = Object.keys(FLEET);
-    const idNum = ((fleetKeys.indexOf(state.trailer)+1) * 1000) + Math.round((q.total || 0));
-    document.getElementById('qsId').textContent = '#GCT-' + idNum.toString().padStart(4, '0');
-  }
-
-  // Init
-  selectTrailer(state.trailer);
-
-  // ---------- Trailer card "Quote This" buttons ----------
-  document.querySelectorAll('[data-load]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      const key = btn.dataset.load;
-      selectTrailer(key);
-      document.getElementById('quote').scrollIntoView({ behavior: 'smooth' });
-    });
-  });
-
-  // ---------- Submit quote (mailto) ----------
+  // Booking, quoting, contract signing, and payment all happen on the fleet
+  // detail (/fleet/:slug) and booking pages — not via email. This script only
+  // powers the contact form, scroll reveals, and the footer year.
   const BUSINESS_EMAIL = 'glasscitytrailerrentals@gmail.com';
-
-  document.getElementById('sendQuote').addEventListener('click', () => {
-    const name = document.getElementById('qName').value.trim();
-    const phone = document.getElementById('qPhone').value.trim();
-    const email = document.getElementById('qEmail').value.trim();
-    const notes = document.getElementById('qNotes').value.trim();
-    if (!name || !phone) {
-      showToast('Please add your name and phone first');
-      return;
-    }
-    const q = calcQuote();
-    const t = FLEET[state.trailer];
-    const subj = encodeURIComponent('Quote Request: ' + t.name + ' — ' + name);
-
-    let bodyLines = [
-      'QUOTE REQUEST · ' + document.getElementById('qsId').textContent,
-      '────────────────────────────────────',
-      'Trailer:  ' + t.name
-    ];
-
-    if (q.special) {
-      bodyLines.push('Period:   Roll-Off Drop-Off');
-      bodyLines.push('Days:     ' + q.qty + ' day' + (q.qty === 1 ? '' : 's') + ' (3 included + ' + state.extraDays + ' extra)');
-      bodyLines.push('Base:     $' + t.basePrice);
-      if (state.extraDays > 0) bodyLines.push('Extra:    ' + state.extraDays + ' × $' + t.extraDayRate + ' = $' + (state.extraDays * t.extraDayRate));
-      if (state.tires > 0) bodyLines.push('Tires:    ' + state.tires + ' × $' + t.tireRate + ' = $' + q.tireCost);
-      bodyLines.push('Estimate: $' + q.total);
-    } else {
-      bodyLines.push('Period:   ' + (state.period === 'hour' ? 'Hourly' : state.period === 'day' ? 'Daily' : state.period === 'week' ? 'Weekly' : 'Monthly'));
-      bodyLines.push('Quantity: ' + q.qty + ' ' + state.period + (q.qty === 1 ? '' : 's'));
-      bodyLines.push('Rate:     ' + (q.rate ? '$' + q.rate + ' / ' + state.period : 'Call'));
-      bodyLines.push('Estimate: ' + (q.total != null ? '$' + q.total : 'Call'));
-    }
-
-    bodyLines.push('────────────────────────────────────');
-    bodyLines.push('Name:  ' + name);
-    bodyLines.push('Phone: ' + phone);
-    bodyLines.push('Email: ' + (email || '—'));
-    bodyLines.push('');
-    bodyLines.push('Notes / Pickup Date:');
-    bodyLines.push(notes || '—');
-    bodyLines.push('');
-    bodyLines.push('Requirements: ' + t.reqs);
-
-    const body = encodeURIComponent(bodyLines.join('\n'));
-    window.location.href = 'mailto:' + BUSINESS_EMAIL + '?subject=' + subj + '&body=' + body;
-    showToast('Quote prepared — opening your email');
-  });
 
   // ---------- Contact form (mailto) ----------
   document.getElementById('sendContact').addEventListener('click', () => {
@@ -1903,20 +1530,18 @@
     status.textContent = '> Opening your email app…';
     const subj = encodeURIComponent('Website Inquiry — ' + name);
     const body = encodeURIComponent(
-      'Name:  ' + name + '\n' +
-      'Phone: ' + phone + '\n' +
-      'Email: ' + (email || '—') + '\n\n' +
-      'Message:\n' + msg
+      'Name:  ' + name + '
+' +
+      'Phone: ' + phone + '
+' +
+      'Email: ' + (email || '—') + '
+
+' +
+      'Message:
+' + msg
     );
     window.location.href = 'mailto:' + BUSINESS_EMAIL + '?subject=' + subj + '&body=' + body;
   });
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2600);
-  }
 
   // ---------- Reveal on scroll ----------
   const io = new IntersectionObserver(entries => {

@@ -12,11 +12,15 @@
 const express = require('express');
 const trailerSvc = require('../services/trailer');
 const bookingSvc = require('../services/booking');
-const { computeQuote } = require('../services/pricing');
+const { computeQuote, DELIVERY_FEE_CENTS } = require('../services/pricing');
 const { formatCents } = require('../utils/money');
 const { getTaxRate } = require('../services/settings');
 
 const router = express.Router();
+
+// GET /fleet — the fleet lives in the marketing page's #fleet grid (each card
+// links to /fleet/:slug). Send the "Build a Quote" CTAs there.
+router.get('/fleet', (req, res) => res.redirect('/#fleet'));
 
 // GET /accessibility — accessibility statement (plan §9).
 router.get('/accessibility', (req, res) => {
@@ -87,6 +91,7 @@ router.get('/book/new', async (req, res, next) => {
 
     res.render('book-form', {
       trailer, quote, selection, isDumpster, fmt: formatCents,
+      deliveryFeeCents: DELIVERY_FEE_CENTS,
     });
   } catch (err) {
     next(err);

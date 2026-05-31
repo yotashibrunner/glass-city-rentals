@@ -38,11 +38,12 @@
           <% } %>
           <div class="qrow"><span>Subtotal</span><span><%= fmt(quote.base_cents) %></span></div>
           <div class="qrow"><span>Tax</span><span><%= fmt(quote.tax_cents) %></span></div>
+          <div class="qrow" id="sumDeliveryRow" hidden><span>Delivery</span><span id="sumDelivery"><%= fmt(deliveryFeeCents) %></span></div>
           <div class="qtotal">
             <span class="lbl">Total</span>
-            <span class="val"><%= fmt(quote.total_cents) %></span>
+            <span class="val" id="sumTotal"><%= fmt(quote.total_cents) %></span>
           </div>
-          <p class="qnote">Full balance is charged after you sign the rental agreement. Customer pickup at 2004 Front St, Toledo.</p>
+          <p class="qnote">Full balance is charged after you sign the rental agreement. Customer pickup at 2004 Front St, Toledo — or local delivery for <%= fmt(deliveryFeeCents) %>.</p>
         </div>
       </section>
 
@@ -55,6 +56,19 @@
             <div><label class="fl" for="phone">Phone <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label><input type="text" id="phone" inputmode="tel" autocomplete="tel" required aria-required="true" /></div>
             <div><label class="fl" for="email">Email</label><input type="text" id="email" inputmode="email" autocomplete="email" /></div>
           </div>
+<% if (!isDumpster) { %>
+          <div class="step">Fulfillment</div>
+          <div role="radiogroup" aria-label="Fulfillment" style="display:flex;flex-direction:column;gap:8px;">
+            <label class="tire-ack" style="color:var(--ink);"><input type="radio" name="fulfillment" value="pickup" checked /> <span>Customer Pickup — <strong>Free</strong></span></label>
+            <label class="tire-ack" style="color:var(--ink);"><input type="radio" name="fulfillment" value="delivery" /> <span>Delivery — <strong><%= fmt(deliveryFeeCents) %></strong></span></label>
+          </div>
+          <div class="field-row" id="addrRow" hidden style="margin-top:12px;">
+            <div>
+              <label class="fl" for="deliveryAddress">Delivery address <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+              <input type="text" id="deliveryAddress" autocomplete="street-address" placeholder="Street, city, ZIP" />
+            </div>
+          </div>
+<% } %>
           <div class="step">Notes</div>
           <div class="field-row"><div><label class="fl" for="notes">Notes (optional)</label><input type="text" id="notes" placeholder="Anything we should know?" /></div></div>
 
@@ -72,12 +86,46 @@
       var sel = JSON.parse(document.getElementById('selection-data').textContent);
       var el = function (id) { return document.getElementById(id); };
       var form = el('bookForm');
+
+      // Server-authoritative amounts (base + tax) and the flat delivery fee.
+      var BASE_TOTAL = <%= quote.total_cents %>;
+      var DELIVERY_FEE = <%= deliveryFeeCents %>;
+      function money(c) { return c % 100 === 0 ? '$' + (c / 100) : '$' + (c / 100).toFixed(2); }
+
+      function fulfillment() {
+        var d = document.querySelector('input[name="fulfillment"]:checked');
+        return d ? d.value : 'pickup';
+      }
+
+      // Live: reveal the address field + add the delivery fee to the shown total.
+      function refresh() {
+        var delivery = fulfillment() === 'delivery';
+        var addrRow = el('addrRow');
+        if (addrRow) addrRow.hidden = !delivery;
+        var feeRow = el('sumDeliveryRow');
+        if (feeRow) feeRow.hidden = !delivery;
+        el('sumTotal').textContent = money(BASE_TOTAL + (delivery ? DELIVERY_FEE : 0));
+      }
+      Array.prototype.forEach.call(document.querySelectorAll('input[name="fulfillment"]'), function (r) {
+        r.addEventListener('change', refresh);
+      });
+      refresh();
+
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         el('err').textContent = '';
         var name = el('name').value.trim();
         var phone = el('phone').value.trim();
         if (!name || !phone) { el('err').textContent = 'Name and phone are required.'; return; }
+
+        var ful = fulfillment();
+        var addrEl = el('deliveryAddress');
+        var address = addrEl ? addrEl.value.trim() : '';
+        if (ful === 'delivery' && !address) {
+          el('err').textContent = 'Enter a delivery address, or choose customer pickup.';
+          return;
+        }
+
         var btn = el('continueBtn');
         btn.disabled = true; btn.textContent = 'Working…';
         try {
@@ -86,6 +134,8 @@
             body: JSON.stringify(Object.assign({}, sel, {
               customer: { name: name, phone: phone, email: el('email').value.trim() },
               notes: el('notes').value.trim(),
+              fulfillment: ful,
+              delivery_address: ful === 'delivery' ? address : null,
             })),
           });
           var data = await res.json().catch(function () { return {}; });

@@ -29,19 +29,34 @@ async function createCheckoutSession(booking, { successUrl, cancelUrl }) {
   const stripe = getClient();
   if (!stripe) throw unconfigured();
 
-  return stripe.checkout.sessions.create({
-    mode: 'payment',
-    line_items: [{
+  const deliveryFee = booking.delivery_fee_cents || 0;
+  const rentalAmount = booking.total_cents - deliveryFee; // base + tax
+
+  const lineItems = [{
+    price_data: {
+      currency: 'usd',
+      product_data: {
+        name: `${booking.trailer_name} — ${booking.ref_code}`,
+        description: 'Glass City Trailer Rentals — rental balance',
+      },
+      unit_amount: rentalAmount,
+    },
+    quantity: 1,
+  }];
+  if (deliveryFee > 0) {
+    lineItems.push({
       price_data: {
         currency: 'usd',
-        product_data: {
-          name: `${booking.trailer_name} — ${booking.ref_code}`,
-          description: 'Glass City Trailer Rentals — full balance (pickup only)',
-        },
-        unit_amount: booking.total_cents,
+        product_data: { name: 'Local delivery', description: 'Drop-off & pickup at your address' },
+        unit_amount: deliveryFee,
       },
       quantity: 1,
-    }],
+    });
+  }
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: lineItems,
     customer_email: booking.customer_email || undefined,
     client_reference_id: booking.ref_code,
     metadata: { booking_id: booking.id, ref_code: booking.ref_code },

@@ -7,7 +7,7 @@
 
 const { pool } = require('../db');
 const trailerSvc = require('./trailer');
-const { computeQuote } = require('./pricing');
+const { computeQuote, DELIVERY_FEE_CENTS } = require('./pricing');
 const { OCCUPYING_STATUSES } = require('./availability');
 const { buildAgreement, toPlainText, CONTRACT_VERSION } = require('./contract');
 const { parseDateOnly, addDays, todayUTC, toDateOnly } = require('../utils/date');
@@ -87,6 +87,18 @@ async function createBooking(input) {
   const extraCharges = isDumpster ? quote.base_cents - trailer.flat_drop_off_cents : 0;
   const tireCount = Math.max(0, Math.floor(Number(input.tire_count) || 0));
 
+  // Fulfillment: pickup (free) or delivery (flat fee + required address). The
+  // delivery fee is added on top of base + tax for the charged total.
+  const fulfillment = input.fulfillment === 'delivery' ? 'delivery' : 'pickup';
+  let deliveryAddress = null;
+  let deliveryFee = 0;
+  if (fulfillment === 'delivery') {
+    deliveryAddress = (input.delivery_address || '').trim();
+    if (!deliveryAddress) throw badRequest('A delivery address is required for delivery.');
+    deliveryFee = DELIVERY_FEE_CENTS;
+  }
+  const totalCents = quote.total_cents + deliveryFee;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -118,12 +130,12 @@ async function createBooking(input) {
           `INSERT INTO bookings
              (ref_code, trailer_id, customer_id, start_at, end_at, period_type, quantity,
               tire_count, base_amount_cents, extra_charges_cents, tax_cents, total_cents,
-              customer_notes, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending')
+              customer_notes, status, fulfillment, delivery_address, delivery_fee_cents)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,$15,$16)
            RETURNING id, ref_code`,
           [ref, trailer.id, customerId, start.toISOString(), end.toISOString(), periodType, quantity,
-            tireCount, baseAmount, extraCharges, quote.tax_cents, quote.total_cents,
-            (input.notes || '').trim() || null]
+            tireCount, baseAmount, extraCharges, quote.tax_cents, totalCents,
+            (input.notes || '').trim() || null, fulfillment, deliveryAddress, deliveryFee]
         );
         booking = res.rows[0];
       } catch (e) {
@@ -243,6 +255,7 @@ const OPERATOR_SELECT = `
          b.total_cents, b.amount_paid_cents, b.tire_count,
          b.picked_up_at, b.returned_at, b.customer_notes, b.operator_notes,
          b.contract_signed_at, b.contract_signed_name, b.created_at,
+         b.fulfillment, b.delivery_address, b.delivery_fee_cents,
          t.id AS trailer_id, t.name AS trailer_name, t.type AS trailer_type,
          t.slug AS trailer_slug, t.size_label, t.status AS trailer_status,
          c.name AS customer_name, c.phone AS customer_phone, c.email AS customer_email

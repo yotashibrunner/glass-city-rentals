@@ -285,6 +285,9 @@ input:focus-visible {
 
 /* ── Status badge variants (bookings) ───────────────────────────────── */
 .badge-warn { background: rgba(214, 158, 46, 0.18); color: #f0c674; }
+/* Fulfillment badges (PICKUP / DELIVERY) */
+.badge-pickup { background: rgba(154, 164, 182, 0.18); color: var(--muted); }
+.badge-delivery { background: rgba(80, 140, 230, 0.22); color: #8ab4f8; }
 .badge-out  { background: rgba(80, 140, 230, 0.20); color: #8ab4f8; }
 .badge-done { background: rgba(154, 164, 182, 0.18); color: var(--muted); }
 
