@@ -261,6 +261,102 @@ input:focus-visible {
 }
 .saved { color: var(--accent); margin: 0; }
 
+/* ── Status badge variants (bookings) ───────────────────────────────── */
+.badge-warn { background: rgba(214, 158, 46, 0.18); color: #f0c674; }
+.badge-out  { background: rgba(80, 140, 230, 0.20); color: #8ab4f8; }
+.badge-done { background: rgba(154, 164, 182, 0.18); color: var(--muted); }
+
+/* ── Booking lists (dashboard + schedule) ───────────────────────────── */
+.card h2 .count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.booking-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.booking-list:empty { display: none; }
+.booking-row {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.booking-open {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--text);
+  cursor: pointer;
+}
+.booking-open:active { background: var(--border); }
+.booking-stripe { width: 5px; flex-shrink: 0; align-self: stretch; }
+.booking-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+}
+.booking-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.booking-sub { font-size: 0.82rem; }
+.booking-tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 12px 11px 0;
+  flex-shrink: 0;
+}
+.booking-phone { font-size: 0.8rem; white-space: nowrap; }
+
+/* ── Booking detail ─────────────────────────────────────────────────── */
+.detail-head .ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.detail-head h2 { margin: 8px 0 4px; }
+.phone-link { color: var(--accent); text-decoration: none; font-size: 0.95rem; }
+.phone-link:not([href]) { color: var(--muted); }
+
+.kv { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.kv > div { display: flex; flex-direction: column; gap: 2px; }
+.kv dt { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.kv dd { margin: 0; font-size: 0.98rem; }
+
+.contract-btn { display: block; text-align: center; text-decoration: none; margin-top: 16px; }
+.done-note { margin: 0; }
+
+/* Stack the two action buttons full-width with spacing. */
+[data-pickup], [data-return] { width: 100%; }
+[data-pickup] + [data-return] { margin-top: 10px; }
+
+/* ── Schedule date bar ──────────────────────────────────────────────── */
+.date-bar { display: flex; align-items: center; gap: 10px; padding: 12px; }
+.date-bar .step { min-width: 44px; font-size: 1.3rem; padding: 6px 10px; }
+.date-input {
+  flex: 1;
+  font-size: 1rem;
+  padding: 11px 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+.date-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.day-label { margin: -4px 2px 0; font-weight: 600; }
+
 /* ── Misc ───────────────────────────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.9rem; }
 .welcome { margin: 4px 2px 0; }

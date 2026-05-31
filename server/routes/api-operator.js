@@ -6,12 +6,17 @@
 //
 // Routes:
 //   GET   /api/operator/me            the logged-in operator
-//   GET   /api/operator/dashboard     empty placeholder (real data in Phase 6)
+//   GET   /api/operator/dashboard     today's pickups + returns + active rentals
+//   GET   /api/operator/schedule      chronological bookings for a given day
+//   GET   /api/operator/bookings/:id  one booking, full detail
+//   PATCH /api/operator/bookings/:id  mark picked up / returned, edit notes
 //   GET   /api/operator/trailers      full fleet with status, pricing, specs
 //   PATCH /api/operator/trailers/:id  update status / pricing / other fields
 
 const express = require('express');
 const { pool, query } = require('../db');
+const bookingSvc = require('../services/booking');
+const { formatCents } = require('../utils/money');
 
 const router = express.Router();
 
@@ -81,16 +86,71 @@ router.get('/me', (req, res) => {
   res.json({ user: req.user });
 });
 
-// GET /api/operator/dashboard — empty shell for Phase 2.
-// Phase 6 fills pickups/returns/active from the bookings table.
-router.get('/dashboard', (req, res) => {
-  res.json({
-    user: req.user,
-    pickups: [],
-    returns: [],
-    active: [],
-    message: 'Dashboard is empty — booking management arrives in a later phase.',
-  });
+// Attach formatted dollar strings + a ready-to-use contract PDF link so the PWA
+// doesn't reimplement money math or URL building. contract_url is only set once
+// the agreement is signed (the public PDF route 409s otherwise).
+function serializeBooking(b) {
+  return {
+    ...b,
+    total_fmt: formatCents(b.total_cents),
+    amount_paid_fmt: formatCents(b.amount_paid_cents),
+    contract_url: b.contract_signed_at ? `/api/bookings/${b.ref_code}/contract.pdf` : null,
+  };
+}
+
+// GET /api/operator/dashboard — today's pickups, returns, and active rentals.
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    const { pickups, returns, active } = await bookingSvc.getDashboard();
+    res.json({
+      user: req.user,
+      pickups: pickups.map(serializeBooking),
+      returns: returns.map(serializeBooking),
+      active: active.map(serializeBooking),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/operator/schedule?date=YYYY-MM-DD — chronological list for a day.
+// Defaults to today when no date is supplied.
+router.get('/schedule', async (req, res, next) => {
+  try {
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    const { date: resolvedDate, bookings } = await bookingSvc.getSchedule(date);
+    res.json({ date: resolvedDate, bookings: bookings.map(serializeBooking) });
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
+    next(err);
+  }
+});
+
+// GET /api/operator/bookings/:id — full detail for one booking.
+router.get('/bookings/:id', async (req, res, next) => {
+  const { id } = req.params;
+  if (!UUID_RE.test(id)) return res.status(400).json({ error: 'Invalid booking id' });
+  try {
+    const booking = await bookingSvc.getById(id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    res.json({ booking: serializeBooking(booking) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/operator/bookings/:id — mark picked up ('out') / returned, and/or
+// edit operator notes. Returning a booking flips its trailer back to available.
+router.patch('/bookings/:id', async (req, res, next) => {
+  const { id } = req.params;
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  try {
+    const booking = await bookingSvc.updateBooking(id, body, req.user.id);
+    res.json({ booking: serializeBooking(booking) });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
 });
 
 // GET /api/operator/trailers — the full fleet, ordered for display.

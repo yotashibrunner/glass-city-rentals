@@ -10,7 +10,7 @@ const trailerSvc = require('./trailer');
 const { computeQuote } = require('./pricing');
 const { OCCUPYING_STATUSES } = require('./availability');
 const { buildAgreement, toPlainText, CONTRACT_VERSION } = require('./contract');
-const { parseDateOnly, addDays } = require('../utils/date');
+const { parseDateOnly, addDays, todayUTC, toDateOnly } = require('../utils/date');
 const { refCode } = require('../utils/ref-code');
 
 function badRequest(message, status = 400) {
@@ -235,7 +235,186 @@ async function attachCheckoutSession(bookingId, sessionId) {
     [bookingId, sessionId]);
 }
 
+// ── Operator views (Phase 6) ─────────────────────────────────────────────
+// All rows below carry the trailer + customer fields the PWA renders, so the
+// dashboard / schedule / detail screens never make a second round-trip.
+const OPERATOR_SELECT = `
+  SELECT b.id, b.ref_code, b.status, b.start_at, b.end_at, b.period_type, b.quantity,
+         b.total_cents, b.amount_paid_cents, b.tire_count,
+         b.picked_up_at, b.returned_at, b.customer_notes, b.operator_notes,
+         b.contract_signed_at, b.contract_signed_name, b.created_at,
+         t.id AS trailer_id, t.name AS trailer_name, t.type AS trailer_type,
+         t.slug AS trailer_slug, t.size_label, t.status AS trailer_status,
+         c.name AS customer_name, c.phone AS customer_phone, c.email AS customer_email
+    FROM bookings b
+    JOIN trailers t ON t.id = b.trailer_id
+    JOIN customers c ON c.id = b.customer_id`;
+
+// Statuses that represent an upcoming, confirmed-but-not-yet-out rental.
+const UPCOMING_STATUSES = ['paid', 'confirmed'];
+
+// Today's pickups + returns + currently-out rentals. "Today" is anchored to UTC
+// midnight, matching how availability and the calendar reason about dates
+// elsewhere (utils/date.js). Returns three arrays of operator booking rows.
+async function getDashboard() {
+  const today = todayUTC();
+  const tomorrow = addDays(today, 1);
+  const t0 = today.toISOString();
+  const t1 = tomorrow.toISOString();
+
+  // Pickups today: confirmed rentals whose window starts within today and that
+  // haven't been picked up yet.
+  const pickups = await pool.query(
+    `${OPERATOR_SELECT}
+      WHERE b.status = ANY($1) AND b.start_at >= $2 AND b.start_at < $3
+      ORDER BY b.start_at, t.name`,
+    [UPCOMING_STATUSES, t0, t1]
+  );
+
+  // Returns today: rentals currently out whose (exclusive) end is on or before
+  // tomorrow's midnight — i.e. due back today, including anything overdue.
+  const returns = await pool.query(
+    `${OPERATOR_SELECT}
+      WHERE b.status = 'out' AND b.end_at <= $1
+      ORDER BY b.end_at, t.name`,
+    [t1]
+  );
+
+  // Active now: everything currently out, soonest-due first.
+  const active = await pool.query(
+    `${OPERATOR_SELECT}
+      WHERE b.status = 'out'
+      ORDER BY b.end_at, t.name`
+  );
+
+  return { pickups: pickups.rows, returns: returns.rows, active: active.rows };
+}
+
+// All bookings touching a given 'YYYY-MM-DD' date, chronological. A booking is
+// included if its [start, end) window overlaps the day; each row is tagged with
+// whether the pickup and/or return falls on that day so the PWA can label it.
+async function getSchedule(dateStr) {
+  const day = parseDateOnly(dateStr);
+  if (!day) throw badRequest('A valid date (YYYY-MM-DD) is required.');
+  const next = addDays(day, 1);
+  const d0 = day.toISOString();
+  const d1 = next.toISOString();
+
+  const { rows } = await pool.query(
+    `${OPERATOR_SELECT}
+      WHERE b.status <> 'cancelled'
+        AND b.start_at < $2 AND b.end_at > $1
+      ORDER BY b.start_at, b.end_at, t.name`,
+    [d0, d1]
+  );
+
+  const bookings = rows.map((r) => ({
+    ...r,
+    is_pickup_day: r.start_at >= day && r.start_at < next,
+    // end_at is exclusive: a booking whose last rental day is `day` ends at the
+    // following midnight, so the return falls on `day` when end is in (d0, d1].
+    is_return_day: r.end_at > day && r.end_at <= next,
+  }));
+
+  return { date: toDateOnly(day), bookings };
+}
+
+// Allowed operator status transitions and the timestamp each one stamps.
+const TRANSITIONS = {
+  out: { from: UPCOMING_STATUSES, stamp: 'picked_up_at' },        // Mark Picked Up
+  returned: { from: ['out'], stamp: 'returned_at' },              // Mark Returned
+};
+
+// Apply an operator update to a booking: a status transition (mark picked up /
+// returned) and/or operator notes. On return, the trailer flips back to
+// available. Runs in one transaction with an audit-log entry. Returns the
+// updated booking detail (getById shape), or throws a tagged Error.
+async function updateBooking(id, patch, adminUserId) {
+  if (!UUID_RE.test(id)) throw badRequest('Invalid booking id.');
+
+  const hasStatus = patch.status !== undefined;
+  const hasNotes = patch.operator_notes !== undefined;
+  if (!hasStatus && !hasNotes) throw badRequest('No fields to update.');
+
+  let transition = null;
+  if (hasStatus) {
+    transition = TRANSITIONS[patch.status];
+    if (!transition) throw badRequest("status must be 'out' or 'returned'.");
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Lock the row so concurrent operators can't double-transition it.
+    const cur = await client.query(
+      'SELECT id, status, trailer_id FROM bookings WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (!cur.rows.length) throw badRequest('Booking not found.', 404);
+    const booking = cur.rows[0];
+
+    const sets = ['updated_at = NOW()'];
+    const values = [];
+
+    if (transition) {
+      if (!transition.from.includes(booking.status)) {
+        throw badRequest(
+          `Cannot move a '${booking.status}' booking to '${patch.status}'.`,
+          409
+        );
+      }
+      values.push(patch.status);
+      sets.push(`status = $${values.length}`);
+      sets.push(`${transition.stamp} = NOW()`);
+    }
+
+    if (hasNotes) {
+      const notes = patch.operator_notes;
+      if (notes !== null && typeof notes !== 'string') {
+        throw badRequest('operator_notes must be a string or null.');
+      }
+      values.push(notes === null ? null : notes.trim() || null);
+      sets.push(`operator_notes = $${values.length}`);
+    }
+
+    values.push(id);
+    await client.query(
+      `UPDATE bookings SET ${sets.join(', ')} WHERE id = $${values.length}`,
+      values
+    );
+
+    // Returning a trailer frees it for the next renter.
+    if (patch.status === 'returned') {
+      await client.query(
+        `UPDATE trailers SET status = 'available', updated_at = NOW()
+          WHERE id = $1 AND status <> 'out_of_service'`,
+        [booking.trailer_id]
+      );
+    }
+
+    await client.query(
+      `INSERT INTO audit_log (admin_user_id, action, entity_type, entity_id, details)
+       VALUES ($1, 'booking.update', 'booking', $2, $3)`,
+      [adminUserId || null, id, JSON.stringify({
+        status: hasStatus ? patch.status : undefined,
+        notes_changed: hasNotes || undefined,
+      })]
+    );
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return getById(id);
+}
+
 module.exports = {
   createBooking, getById, getByRef, signBooking, markPaidBySession,
   attachCheckoutSession, buildAgreementFor,
+  getDashboard, getSchedule, updateBooking,
 };

@@ -59,6 +59,77 @@
     return s === 'out_of_service' ? 'Out of Service' : 'Available';
   }
 
+  // ── Date helpers ────────────────────────────────────────────────────────
+  // Bookings store start/end at UTC midnight (date-only granularity), so all
+  // formatting reads UTC to avoid the displayed day drifting by timezone.
+  const DAY_MS = 86400000;
+
+  function fmtDay(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC',
+    });
+  }
+
+  // end_at is exclusive (the midnight after the last rental day), so the day the
+  // trailer is actually due back is one day earlier.
+  function fmtReturnDay(iso) {
+    if (!iso) return '—';
+    return fmtDay(new Date(new Date(iso).getTime() - DAY_MS).toISOString());
+  }
+
+  // Compact pickup→return range for list rows.
+  function fmtRange(b) {
+    return `${fmtDay(b.start_at)} – ${fmtReturnDay(b.end_at)}`;
+  }
+
+  function todayISODate() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function shiftDate(isoDate, days) {
+    const d = new Date(`${isoDate}T00:00:00Z`);
+    return new Date(d.getTime() + days * DAY_MS).toISOString().slice(0, 10);
+  }
+
+  // ── Booking status badges ────────────────────────────────────────────────
+  const BOOKING_STATUS = {
+    pending: { label: 'Pending', cls: 'badge-warn' },
+    signed: { label: 'Signed', cls: 'badge-warn' },
+    paid: { label: 'Paid', cls: 'badge-ok' },
+    confirmed: { label: 'Confirmed', cls: 'badge-ok' },
+    out: { label: 'Out', cls: 'badge-out' },
+    returned: { label: 'Returned', cls: 'badge-done' },
+    cancelled: { label: 'Cancelled', cls: 'badge-oos' },
+  };
+
+  function paintBookingBadge(el, status) {
+    const meta = BOOKING_STATUS[status] || { label: status, cls: '' };
+    el.textContent = meta.label;
+    el.className = `badge ${meta.cls}`;
+  }
+
+  // Deterministic color per trailer so the schedule reads at a glance.
+  function trailerHue(key) {
+    let h = 0;
+    for (let i = 0; i < (key || '').length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
+    return h;
+  }
+
+  // Fill a cloned tpl-booking-row and wire its tap target.
+  function fillBookingRow(node, b, onOpen) {
+    node.querySelector('[data-customer]').textContent = b.customer_name || '—';
+    node.querySelector('[data-trailer]').textContent = b.trailer_name || '';
+    node.querySelector('[data-when]').textContent = fmtRange(b);
+    node.querySelector('[data-phone]').textContent = b.customer_phone || '';
+    paintBookingBadge(node.querySelector('[data-badge]'), b.status);
+    const stripe = node.querySelector('[data-stripe]');
+    stripe.style.background = `hsl(${trailerHue(b.trailer_slug || b.trailer_name)} 55% 50%)`;
+    node.querySelector('[data-open]').addEventListener('click', () => onOpen(b));
+  }
+
   // Keep a badge + toggle button visually in sync with a trailer's status.
   function paintStatus(badgeEl, toggleEl, status) {
     const oos = status === 'out_of_service';
@@ -148,26 +219,228 @@
 
     const welcome = root.querySelector('[data-welcome]');
     const logoutBtn = root.querySelector('[data-logout]');
-    const inventoryNav = root.querySelector('[data-nav="inventory"]');
+    const errEl = root.querySelector('[data-error]');
 
     logoutBtn.addEventListener('click', () => {
       api.logout();
       renderLogin();
     });
-    inventoryNav.addEventListener('click', () => renderInventory());
+    root.querySelector('[data-nav="inventory"]').addEventListener('click', () => renderInventory());
+    root.querySelector('[data-nav="schedule"]').addEventListener('click', () => renderSchedule());
 
     // Show whatever we already know immediately, then confirm with the API.
     const cached = api.auth.user;
     if (cached) welcome.textContent = `Signed in as ${cached.name || cached.email}.`;
 
+    // Paint one dashboard section: fill its list or show the empty message.
+    function paintSection(key, bookings) {
+      const listEl = root.querySelector(`[data-list="${key}"]`);
+      const emptyEl = root.querySelector(`[data-empty="${key}"]`);
+      const countEl = root.querySelector(`[data-count="${key}"]`);
+      listEl.replaceChildren();
+      countEl.textContent = bookings.length ? bookings.length : '';
+      if (!bookings.length) {
+        emptyEl.hidden = false;
+        listEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true;
+      listEl.hidden = false;
+      const rowTpl = document.getElementById('tpl-booking-row');
+      for (const b of bookings) {
+        const node = rowTpl.content.cloneNode(true);
+        fillBookingRow(node, b, (bk) => renderBookingDetail(bk.id, renderDashboard));
+        listEl.appendChild(node);
+      }
+    }
+
     try {
       const data = await api.apiFetch('/api/operator/dashboard');
       const u = data.user || cached || {};
       welcome.textContent = `Signed in as ${u.name || u.email || 'operator'}.`;
+      paintSection('pickups', data.pickups || []);
+      paintSection('returns', data.returns || []);
+      paintSection('active', data.active || []);
     } catch (err) {
       if (handleAuth(err)) return;
-      welcome.textContent = 'Could not reach the server. Pull to refresh when back online.';
+      errEl.textContent = 'Could not reach the server. Try again when back online.';
+      errEl.hidden = false;
     }
+  }
+
+  // ── Booking detail ───────────────────────────────────────────────────────
+  // onBack returns to wherever we came from (dashboard or schedule).
+  async function renderBookingDetail(id, onBack) {
+    mount('tpl-booking-detail');
+    root.querySelector('[data-back]').addEventListener('click', () => (onBack || renderDashboard)());
+
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const detailEl = root.querySelector('[data-detail]');
+
+    let booking;
+    try {
+      const data = await api.apiFetch(`/api/operator/bookings/${id}`);
+      booking = data.booking;
+    } catch (err) {
+      if (handleAuth(err)) return;
+      loadingEl.hidden = true;
+      errEl.textContent = err.message || 'Could not load this booking.';
+      errEl.hidden = false;
+      return;
+    }
+    loadingEl.hidden = true;
+
+    function paint() {
+      root.querySelector('[data-ref]').textContent = booking.ref_code;
+      paintBookingBadge(root.querySelector('[data-badge]'), booking.status);
+      root.querySelector('[data-customer]').textContent = booking.customer_name || '—';
+
+      const phone = booking.customer_phone || '';
+      root.querySelector('[data-phone]').textContent = phone || 'No phone on file';
+      const phoneLink = root.querySelector('[data-phone-link]');
+      if (phone) phoneLink.href = `tel:${phone.replace(/[^+\d]/g, '')}`;
+      else phoneLink.removeAttribute('href');
+
+      const trailerLine = [booking.trailer_name, booking.size_label].filter(Boolean).join(' · ');
+      root.querySelector('[data-trailer]').textContent = trailerLine;
+      root.querySelector('[data-start]').textContent = fmtDay(booking.start_at);
+      root.querySelector('[data-end]').textContent = fmtReturnDay(booking.end_at);
+      root.querySelector('[data-paid]').textContent =
+        booking.amount_paid_cents ? booking.amount_paid_fmt : `${booking.total_fmt} (unpaid)`;
+
+      if (booking.customer_notes) {
+        root.querySelector('[data-notes-row]').hidden = false;
+        root.querySelector('[data-notes]').textContent = booking.customer_notes;
+      }
+      const opRow = root.querySelector('[data-opnotes-row]');
+      if (booking.operator_notes) {
+        opRow.hidden = false;
+        root.querySelector('[data-opnotes]').textContent = booking.operator_notes;
+      } else {
+        opRow.hidden = true;
+      }
+
+      const contractBtn = root.querySelector('[data-contract]');
+      if (booking.contract_url) {
+        contractBtn.href = booking.contract_url;
+        contractBtn.hidden = false;
+      } else {
+        contractBtn.hidden = true;
+      }
+
+      // Action buttons reflect the booking's place in its lifecycle.
+      const pickupBtn = root.querySelector('[data-pickup]');
+      const returnBtn = root.querySelector('[data-return]');
+      const doneEl = root.querySelector('[data-done]');
+      const canPickup = booking.status === 'paid' || booking.status === 'confirmed';
+      const canReturn = booking.status === 'out';
+      pickupBtn.hidden = !canPickup;
+      returnBtn.hidden = !canReturn;
+      if (booking.status === 'returned') {
+        doneEl.hidden = false;
+        doneEl.textContent = 'Returned — trailer is available again.';
+      } else if (booking.status === 'cancelled') {
+        doneEl.hidden = false;
+        doneEl.textContent = 'This booking was cancelled.';
+      } else {
+        doneEl.hidden = true;
+      }
+    }
+    paint();
+
+    const actionErr = root.querySelector('[data-action-error]');
+    async function transition(btn, status, working) {
+      actionErr.hidden = true;
+      btn.disabled = true;
+      btn.textContent = working;
+      try {
+        const data = await api.apiFetch(`/api/operator/bookings/${booking.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+        booking = data.booking;
+        paint();
+      } catch (err) {
+        if (handleAuth(err)) return;
+        actionErr.textContent = err.message || 'Could not update. Try again.';
+        actionErr.hidden = false;
+        btn.disabled = false;
+      }
+    }
+
+    root.querySelector('[data-pickup]').addEventListener('click', (e) =>
+      transition(e.currentTarget, 'out', 'Marking…'));
+    root.querySelector('[data-return]').addEventListener('click', (e) =>
+      transition(e.currentTarget, 'returned', 'Marking…'));
+
+    detailEl.hidden = false;
+  }
+
+  // ── Schedule ───────────────────────────────────────────────────────────
+  async function renderSchedule(initialDate) {
+    mount('tpl-schedule');
+    root.querySelector('[data-back]').addEventListener('click', () => renderDashboard());
+
+    const dateInput = root.querySelector('[data-date]');
+    const dayLabel = root.querySelector('[data-day-label]');
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const listEl = root.querySelector('[data-list]');
+    const emptyEl = root.querySelector('[data-empty]');
+
+    let current = initialDate || todayISODate();
+    dateInput.value = current;
+
+    async function load() {
+      dateInput.value = current;
+      dayLabel.textContent = current === todayISODate()
+        ? 'Today' : fmtDay(`${current}T00:00:00Z`);
+      loadingEl.hidden = false;
+      errEl.hidden = true;
+      listEl.hidden = true;
+      emptyEl.hidden = true;
+      listEl.replaceChildren();
+
+      let bookings;
+      try {
+        const data = await api.apiFetch(`/api/operator/schedule?date=${current}`);
+        bookings = data.bookings || [];
+      } catch (err) {
+        if (handleAuth(err)) return;
+        loadingEl.hidden = true;
+        errEl.textContent = err.message || 'Could not load the schedule.';
+        errEl.hidden = false;
+        return;
+      }
+
+      loadingEl.hidden = true;
+      if (!bookings.length) {
+        emptyEl.hidden = false;
+        return;
+      }
+      const rowTpl = document.getElementById('tpl-booking-row');
+      for (const b of bookings) {
+        const node = rowTpl.content.cloneNode(true);
+        fillBookingRow(node, b, (bk) => renderBookingDetail(bk.id, () => renderSchedule(current)));
+        listEl.appendChild(node);
+      }
+      listEl.hidden = false;
+    }
+
+    root.querySelector('[data-prev]').addEventListener('click', () => {
+      current = shiftDate(current, -1);
+      load();
+    });
+    root.querySelector('[data-next]').addEventListener('click', () => {
+      current = shiftDate(current, 1);
+      load();
+    });
+    dateInput.addEventListener('change', () => {
+      if (dateInput.value) { current = dateInput.value; load(); }
+    });
+
+    load();
   }
 
   // ── Inventory ──────────────────────────────────────────────────────────

@@ -67,6 +67,14 @@
       <p class="muted welcome" data-welcome></p>
 
       <nav class="nav-list">
+        <button type="button" class="nav-item" data-nav="schedule">
+          <span class="nav-icon" aria-hidden="true">📅</span>
+          <span class="nav-text">
+            <span class="nav-label">Schedule</span>
+            <span class="nav-sub muted">Day-by-day, by trailer</span>
+          </span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
         <button type="button" class="nav-item" data-nav="inventory">
           <span class="nav-icon" aria-hidden="true">🚚</span>
           <span class="nav-text">
@@ -77,24 +85,114 @@
         </button>
       </nav>
 
+      <p class="error" data-error hidden></p>
+
       <section class="card">
-        <h2>Today's Pickups</h2>
-        <p class="empty" data-empty>Nothing scheduled yet.</p>
+        <h2>Today's Pickups <span class="count" data-count="pickups"></span></h2>
+        <ul class="booking-list" data-list="pickups"></ul>
+        <p class="empty" data-empty="pickups">Nothing scheduled today.</p>
       </section>
 
       <section class="card">
-        <h2>Today's Returns</h2>
-        <p class="empty">Nothing scheduled yet.</p>
+        <h2>Today's Returns <span class="count" data-count="returns"></span></h2>
+        <ul class="booking-list" data-list="returns"></ul>
+        <p class="empty" data-empty="returns">Nothing due back today.</p>
       </section>
 
       <section class="card">
-        <h2>Active Rentals</h2>
-        <p class="empty">No trailers currently out.</p>
+        <h2>Active Now <span class="count" data-count="active"></span></h2>
+        <ul class="booking-list" data-list="active"></ul>
+        <p class="empty" data-empty="active">No trailers currently out.</p>
       </section>
+    </main>
+  </template>
 
-      <p class="muted hint">
-        Booking management and schedule arrive in upcoming phases.
-      </p>
+  <!-- A single booking row (cloned into dashboard + schedule lists). -->
+  <template id="tpl-booking-row">
+    <li class="booking-row">
+      <button type="button" class="booking-open" data-open>
+        <span class="booking-stripe" data-stripe aria-hidden="true"></span>
+        <span class="booking-meta">
+          <span class="booking-name" data-customer></span>
+          <span class="booking-sub muted" data-trailer></span>
+          <span class="booking-sub muted" data-when></span>
+        </span>
+        <span class="booking-tail">
+          <span class="badge" data-badge></span>
+          <span class="booking-phone muted" data-phone></span>
+        </span>
+      </button>
+    </li>
+  </template>
+
+  <!-- ── Booking detail view ────────────────────────────────────────── -->
+  <template id="tpl-booking-detail">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Booking</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <p class="empty" data-loading>Loading…</p>
+      <p class="error" data-error hidden></p>
+
+      <div data-detail hidden>
+        <section class="card detail-head">
+          <div class="status-row">
+            <span class="ref" data-ref></span>
+            <span class="badge" data-badge></span>
+          </div>
+          <h2 data-customer></h2>
+          <a class="phone-link" data-phone-link>
+            <span data-phone></span>
+          </a>
+        </section>
+
+        <section class="card">
+          <dl class="kv">
+            <div><dt>Trailer</dt><dd data-trailer></dd></div>
+            <div><dt>Pickup</dt><dd data-start></dd></div>
+            <div><dt>Return</dt><dd data-end></dd></div>
+            <div><dt>Total paid</dt><dd data-paid></dd></div>
+            <div data-notes-row hidden><dt>Customer notes</dt><dd data-notes></dd></div>
+            <div data-opnotes-row hidden><dt>Operator notes</dt><dd data-opnotes></dd></div>
+          </dl>
+          <a class="btn btn-ghost contract-btn" data-contract target="_blank" rel="noopener" hidden>
+            View signed contract (PDF)
+          </a>
+        </section>
+
+        <section class="card">
+          <p class="error" data-action-error hidden></p>
+          <button type="button" class="btn btn-primary" data-pickup hidden>Mark Picked Up</button>
+          <button type="button" class="btn btn-primary" data-return hidden>Mark Returned</button>
+          <p class="muted done-note" data-done hidden></p>
+        </section>
+      </div>
+    </main>
+  </template>
+
+  <!-- ── Schedule view ──────────────────────────────────────────────── -->
+  <template id="tpl-schedule">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Schedule</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <div class="card date-bar">
+        <button type="button" class="btn btn-ghost step" data-prev aria-label="Previous day">‹</button>
+        <input type="date" class="date-input" data-date aria-label="Schedule date" />
+        <button type="button" class="btn btn-ghost step" data-next aria-label="Next day">›</button>
+      </div>
+      <p class="muted day-label" data-day-label></p>
+
+      <p class="empty" data-loading>Loading…</p>
+      <p class="error" data-error hidden></p>
+      <ul class="booking-list" data-list hidden></ul>
+      <p class="empty" data-empty hidden>No bookings on this day.</p>
     </main>
   </template>
 

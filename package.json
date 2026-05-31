@@ -14,6 +14,7 @@
     "migrate:up": "node-pg-migrate -j sql -m server/migrations up",
     "migrate:down": "node-pg-migrate -j sql -m server/migrations down",
     "seed": "node scripts/seed-trailers.js",
+    "seed:bookings": "node scripts/seed-bookings.js",
     "create-admin": "node scripts/create-admin.js",
     "generate-icons": "node scripts/generate-icons.js"
   },
