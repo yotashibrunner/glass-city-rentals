@@ -1530,15 +1530,10 @@
     status.textContent = '> Opening your email app…';
     const subj = encodeURIComponent('Website Inquiry — ' + name);
     const body = encodeURIComponent(
-      'Name:  ' + name + '
-' +
-      'Phone: ' + phone + '
-' +
-      'Email: ' + (email || '—') + '
-
-' +
-      'Message:
-' + msg
+      'Name:  ' + name + '\n' +
+      'Phone: ' + phone + '\n' +
+      'Email: ' + (email || '—') + '\n\n' +
+      'Message:\n' + msg
     );
     window.location.href = 'mailto:' + BUSINESS_EMAIL + '?subject=' + subj + '&body=' + body;
   });
