@@ -11,15 +11,16 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-head">
     <div class="site-head-inner">
       <a class="back" href="/">‹ <span>Home</span></a>
       <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
-      <a class="call" href="tel:+14196543584">Call</a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" id="main">
     <div style="max-width:560px;margin:44px auto 80px;">
       <%
         var paid = booking.status === 'paid';

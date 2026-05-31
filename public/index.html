@@ -750,6 +750,13 @@
     align-items: center;
     gap: 14px;
     transition: all .2s;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .trailer-opt:hover { border-color: var(--green); }
   .trailer-opt.selected {
@@ -990,6 +997,9 @@
     gap: 20px;
     flex-wrap: wrap;
   }
+  .foot-links { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+  .foot-links a { color: var(--ink-dim); }
+  .foot-links a:hover { color: var(--green); }
   .foot-tag {
     font-family: 'Anton', sans-serif;
     font-size: clamp(48px, 9vw, 96px);
@@ -1046,6 +1056,7 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
 
 <!-- =================== TOP BRAND STRIP =================== -->
 <div class="brand-strip">
@@ -1091,6 +1102,7 @@
 </nav>
 
 <!-- =================== HERO =================== -->
+<main id="main">
 <header id="top" class="hero">
   <div class="hero-bg">
     <img src="images/trailer-gooseneck-snow.jpg" alt="Glass City Trailer Rentals dump trailer on the job" />
@@ -1351,13 +1363,13 @@
       <!-- Form -->
       <form class="quote-form reveal" id="quoteForm" novalidate>
         <div class="field">
-          <label class="field-lbl">Step 1 — Select Trailer <span class="req">*</span></label>
-          <div class="trailer-picker" id="trailerPicker"></div>
+          <span class="field-lbl" id="trailerPickerLabel">Step 1 — Select Trailer <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></span>
+          <div class="trailer-picker" id="trailerPicker" role="group" aria-labelledby="trailerPickerLabel"></div>
         </div>
 
         <div class="field" id="periodField">
-          <label class="field-lbl">Step 2 — Rental Period</label>
-          <div class="seg" id="periodSeg">
+          <span class="field-lbl" id="periodLabel">Step 2 — Rental Period</span>
+          <div class="seg" id="periodSeg" role="radiogroup" aria-labelledby="periodLabel">
             <input type="radio" name="period" id="p-hour" value="hour" checked />
             <label for="p-hour">Hour</label>
             <input type="radio" name="period" id="p-day" value="day" />
@@ -1370,30 +1382,33 @@
         </div>
 
         <div class="field" id="qtyField">
-          <label class="field-lbl" id="qtyLabel">Step 3 — How Many Hours? (2 hr minimum)</label>
+          <label class="field-lbl" id="qtyLabel" for="qty">Step 3 — How Many Hours? (2 hr minimum)</label>
           <input type="number" id="qty" min="1" value="2" />
         </div>
 
         <!-- 25-Yarder special inputs (shown only when roll25 selected) -->
         <div class="field" id="roll25Fields" style="display:none;">
-          <label class="field-lbl">Step 2 — Extra Days Beyond 3 Included</label>
+          <label class="field-lbl" for="extraDays">Step 2 — Extra Days Beyond 3 Included</label>
           <input type="number" id="extraDays" min="0" value="0" placeholder="0 = just 3-day drop-off" />
-          <label class="field-lbl" style="margin-top:18px;">Tires (if any)</label>
+          <label class="field-lbl" style="margin-top:18px;" for="tireCount">Tires (if any)</label>
           <input type="number" id="tireCount" min="0" value="0" />
           <p class="qs-note" style="margin-top:8px;">Tires are prohibited but charged at $3 each if found in the bin.</p>
         </div>
 
         <div class="field">
-          <label class="field-lbl">Your Info <span class="req">*</span></label>
+          <span class="field-lbl">Your Info <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></span>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <input type="text" id="qName" placeholder="Full name" required />
-            <input type="tel" id="qPhone" placeholder="Phone" required />
+            <label class="sr-only" for="qName">Full name</label>
+            <input type="text" id="qName" placeholder="Full name" required aria-required="true" />
+            <label class="sr-only" for="qPhone">Phone</label>
+            <input type="tel" id="qPhone" placeholder="Phone" required aria-required="true" />
           </div>
+          <label class="sr-only" for="qEmail">Email (optional)</label>
           <input type="email" id="qEmail" placeholder="Email (optional)" style="margin-top:12px;" />
         </div>
 
         <div class="field">
-          <label class="field-lbl">Pickup Date & Notes</label>
+          <label class="field-lbl" for="qNotes">Pickup Date &amp; Notes</label>
           <textarea id="qNotes" placeholder="When do you need it? Any questions about the trailer, hitch, or delivery?"></textarea>
         </div>
 
@@ -1407,7 +1422,7 @@
       </form>
 
       <!-- Live summary -->
-      <aside class="quote-summary reveal">
+      <aside class="quote-summary reveal" aria-live="polite" aria-label="Live quote estimate">
         <div class="qs-head">
           <div>
             <div class="eyebrow">Live Estimate</div>
@@ -1459,7 +1474,8 @@
 
       <div class="service-pic reveal">
         <span class="service-callout">HQ · 2004 Front St</span>
-        <svg viewBox="0 0 300 220" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg viewBox="0 0 300 220" fill="none" stroke="currentColor" stroke-width="1.5" role="img" aria-labelledby="map-title">
+          <title id="map-title">Service-area map centered on our Toledo HQ, covering Oregon, Perrysburg, Bowling Green, and southeast Michigan.</title>
           <circle cx="150" cy="110" r="80" stroke-dasharray="2 4" opacity=".4"/>
           <circle cx="150" cy="110" r="50" stroke-dasharray="2 4" opacity=".5"/>
           <circle cx="150" cy="110" r="20" stroke-dasharray="2 4" opacity=".6"/>
@@ -1519,32 +1535,34 @@
 
       <form id="contactForm" class="quote-form reveal" novalidate>
         <div class="field">
-          <label class="field-lbl">Name <span class="req">*</span></label>
-          <input type="text" id="cName" required />
+          <label class="field-lbl" for="cName">Name <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+          <input type="text" id="cName" required aria-required="true" />
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
           <div class="field">
-            <label class="field-lbl">Email</label>
+            <label class="field-lbl" for="cEmail">Email</label>
             <input type="email" id="cEmail" />
           </div>
           <div class="field">
-            <label class="field-lbl">Phone <span class="req">*</span></label>
-            <input type="tel" id="cPhone" required />
+            <label class="field-lbl" for="cPhone">Phone <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+            <input type="tel" id="cPhone" required aria-required="true" />
           </div>
         </div>
         <div class="field">
-          <label class="field-lbl">Message <span class="req">*</span></label>
-          <textarea id="cMsg" placeholder="Which trailer are you interested in? When do you need it?" required></textarea>
+          <label class="field-lbl" for="cMsg">Message <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label>
+          <textarea id="cMsg" placeholder="Which trailer are you interested in? When do you need it?" required aria-required="true"></textarea>
         </div>
         <button class="btn btn-primary btn-block" id="sendContact" type="button">
           Send Message
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
         </button>
-        <div class="form-status" id="contactStatus"></div>
+        <div class="form-status" id="contactStatus" role="status" aria-live="polite"></div>
       </form>
     </div>
   </div>
 </section>
+
+</main>
 
 <!-- =================== FOOTER =================== -->
 <footer>
@@ -1584,12 +1602,16 @@
 
     <div class="foot-bottom">
       <span>© <span id="yr"></span> Glass City Trailer Rentals LLC</span>
+      <span class="foot-links">
+        <a href="/accessibility">Accessibility</a>
+        <a href="mailto:glasscitytrailerrentals@gmail.com?subject=Accessibility%20issue">Report an accessibility issue</a>
+      </span>
       <span>Toledo · OH · 43605</span>
     </div>
   </div>
 </footer>
 
-<div class="toast" id="toast">Quote prepared — opening your email</div>
+<div class="toast" id="toast" role="status" aria-live="polite">Quote prepared — opening your email</div>
 
 <script>
   // ---------- Fleet data ----------
@@ -1657,11 +1679,13 @@
       sub = [t.hour && '$'+t.hour+'/hr', t.day && '$'+t.day+'/day', t.week && '$'+t.week+'/wk', t.month && '$'+t.month+'/mo']
             .filter(Boolean).join(' · ');
     }
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'trailer-opt' + (key === state.trailer ? ' selected' : '');
     el.dataset.key = key;
+    el.setAttribute('aria-pressed', key === state.trailer ? 'true' : 'false');
     el.innerHTML = `
-      <div class="trailer-opt-thumb"><img src="${t.photo}" alt="${t.name}" loading="lazy" /></div>
+      <div class="trailer-opt-thumb"><img src="${t.photo}" alt="" loading="lazy" /></div>
       <div>
         <div class="opt-name">${t.name}</div>
         <div class="opt-sub">${sub}</div>
@@ -1675,7 +1699,9 @@
   function selectTrailer(key) {
     state.trailer = key;
     document.querySelectorAll('.trailer-opt').forEach(el => {
-      el.classList.toggle('selected', el.dataset.key === key);
+      const on = el.dataset.key === key;
+      el.classList.toggle('selected', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     const t = FLEET[key];
 

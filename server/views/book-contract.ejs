@@ -26,15 +26,16 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-head">
     <div class="site-head-inner">
       <a class="back" href="/">‹ <span>Home</span></a>
       <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
-      <a class="call" href="tel:+14196543584">Call</a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" id="main">
     <div class="detail">
       <!-- Agreement -->
       <section class="agreement">
@@ -59,19 +60,19 @@
         <h2>Sign &amp; Pay</h2>
         <p class="dim mono" style="font-size:12px;">Total due: <strong style="color:var(--green)"><%= fmt(booking.total_cents) %></strong></p>
 
-        <div class="step">Type your full legal name</div>
+        <div class="step"><label for="signName">Type your full legal name</label></div>
         <div class="field-row"><div><input type="text" id="signName" value="<%= booking.customer_name %>" autocomplete="name" /></div></div>
 
-        <div class="step">Draw your signature (optional)</div>
-        <canvas id="sigCanvas" class="sig-canvas"></canvas>
-        <div class="sig-row"><span class="dim mono" style="font-size:10px;">Sign above with finger or mouse</span><button type="button" class="linkbtn" id="clearSig">Clear</button></div>
+        <div class="step" id="sig-label">Draw your signature (optional)</div>
+        <canvas id="sigCanvas" class="sig-canvas" role="img" aria-label="Signature drawing pad — optional; draw with finger or mouse"></canvas>
+        <div class="sig-row"><span class="dim mono" style="font-size:10px;">Sign above with finger or mouse</span><button type="button" class="linkbtn" id="clearSig">Clear signature</button></div>
 
         <label class="consent"><input type="checkbox" id="agree" /><span>I have read and agree to this rental agreement.</span></label>
         <label class="consent"><input type="checkbox" id="consent" /><span>I consent to sign electronically and to receive the signed agreement and records electronically.</span></label>
 
         <button class="btn btn-primary" id="signBtn" type="button">Sign &amp; Pay →</button>
-        <p class="err" id="err"></p>
-        <p class="qnote" id="okNote" hidden></p>
+        <p class="err" id="err" role="alert" aria-live="assertive"></p>
+        <p class="qnote" id="okNote" role="status" aria-live="polite" hidden></p>
         <p class="qnote">Your name, signature, IP address, device, and the exact agreement text are recorded as your electronic signature.</p>
       </aside>
     </div>

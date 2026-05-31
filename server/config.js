@@ -65,6 +65,11 @@ const config = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
   twilioFromNumber: process.env.TWILIO_FROM_NUMBER || '',
+
+  // ── Monitoring — Sentry (Phase 9) ───────────────────────────────────
+  // Optional: when unset, error reporting is a no-op (errors still log to the
+  // console). Set SENTRY_DSN to capture server errors.
+  sentryDsn: process.env.SENTRY_DSN || '',
 };
 
 config.isProduction = config.env === 'production';

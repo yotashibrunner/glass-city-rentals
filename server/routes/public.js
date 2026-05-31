@@ -18,6 +18,14 @@ const { getTaxRate } = require('../services/settings');
 
 const router = express.Router();
 
+// GET /accessibility — accessibility statement (plan §9).
+router.get('/accessibility', (req, res) => {
+  const updated = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+  });
+  res.render('accessibility', { updated });
+});
+
 router.get('/fleet/:slug', async (req, res, next) => {
   try {
     const trailer = await trailerSvc.getTrailerBySlug(req.params.slug);

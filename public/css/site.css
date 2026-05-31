@@ -33,6 +33,44 @@ a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
 
+/* ---------- Accessibility primitives ---------- */
+/* Visible keyboard focus on every interactive element (WCAG 2.4.7). Uses
+   :focus-visible so mouse clicks don't show a ring but keyboard nav always does. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Visually-hidden but available to screen readers. */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Skip-to-content link: off-screen until focused. */
+.skip-link {
+  position: absolute;
+  left: 12px; top: -60px;
+  z-index: 1000;
+  background: var(--green); color: #07140a;
+  padding: 10px 16px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700;
+  transition: top .15s;
+}
+.skip-link:focus { top: 12px; }
+
+/* Required-field marker. */
+.req { color: var(--danger); }
+
 .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
 @media (max-width: 600px) { .container { padding: 0 16px; } }
 
@@ -209,7 +247,7 @@ input[type="number"], input[type="date"], input[type="text"] {
   border-radius: 4px;
   font-size: 15px;
 }
-input:focus { outline: none; border-color: var(--green); }
+input:focus { border-color: var(--green); }
 
 /* ---------- Calendar ---------- */
 .cal-status {
@@ -237,6 +275,7 @@ input:focus { outline: none; border-color: var(--green); }
   user-select: none;
   transition: background .12s, border-color .12s;
 }
+button.cal-day { font: inherit; appearance: none; -webkit-appearance: none; padding: 0; width: 100%; }
 .cal-day.empty { background: transparent; }
 .cal-day.free { cursor: pointer; }
 .cal-day.free:hover { border-color: var(--green); }
@@ -246,7 +285,7 @@ input:focus { outline: none; border-color: var(--green); }
   cursor: not-allowed;
   text-decoration: line-through;
 }
-.cal-day.past { color: #3a423a; cursor: default; }
+.cal-day.past { color: #5b6359; cursor: default; }
 .cal-day.sel-start, .cal-day.sel-end {
   background: var(--green); color: #07140a; font-weight: 700; border-color: var(--green);
 }

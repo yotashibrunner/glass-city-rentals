@@ -124,20 +124,32 @@
 
         for (let dnum = 1; dnum <= daysInMonth; dnum++) {
           const day = new Date(month.getFullYear(), month.getMonth(), dnum);
-          const cell = document.createElement('div');
+          const dateLabel = `${MONTH_NAMES[month.getMonth()]} ${dnum}, ${month.getFullYear()}`;
+          const isPast = day < today;
+          const isFree = !isPast && !(isBusy(day) || !available);
+
+          // Free days are real <button>s (keyboard + screen-reader operable);
+          // past/busy days are inert <div>s with a status in their label.
+          const cell = document.createElement(isFree ? 'button' : 'div');
           cell.className = 'cal-day';
           cell.textContent = String(dnum);
 
-          if (day < today) {
-            cell.classList.add('past');
-          } else if (isBusy(day) || !available) {
-            cell.classList.add('busy');
-          } else {
+          if (isFree) {
+            cell.type = 'button';
             cell.classList.add('free');
-            if (start && day.getTime() === start.getTime()) cell.classList.add('sel-start');
-            else if (end && day.getTime() === end.getTime()) cell.classList.add('sel-end');
+            cell.setAttribute('aria-label', dateLabel);
+            if (start && day.getTime() === start.getTime()) { cell.classList.add('sel-start'); cell.setAttribute('aria-pressed', 'true'); }
+            else if (end && day.getTime() === end.getTime()) { cell.classList.add('sel-end'); cell.setAttribute('aria-pressed', 'true'); }
             else if (start && end && day > start && day < end) cell.classList.add('in-range');
+            else cell.setAttribute('aria-pressed', 'false');
             cell.addEventListener('click', () => pick(day));
+          } else if (isPast) {
+            cell.classList.add('past');
+            cell.setAttribute('aria-hidden', 'true');
+          } else {
+            cell.classList.add('busy');
+            cell.setAttribute('role', 'img');
+            cell.setAttribute('aria-label', `${dateLabel} — unavailable`);
           }
           grid.appendChild(cell);
         }

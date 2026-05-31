@@ -11,15 +11,16 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-head">
     <div class="site-head-inner">
       <a class="back" href="<%= isDumpster ? '/book/dumpster' : '/fleet/' + trailer.slug %>">‹ <span>Back</span></a>
       <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
-      <a class="call" href="tel:+14196543584">Call</a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" id="main">
     <div class="detail">
       <section>
         <div class="crumb">Reserve / Step 1 of 3 — Your Info</div>
@@ -49,16 +50,16 @@
         <h2>Your Information</h2>
         <form id="bookForm" novalidate>
           <div class="step">Contact</div>
-          <div class="field-row"><div><label class="fl">Full name *</label><input type="text" id="name" autocomplete="name" required /></div></div>
+          <div class="field-row"><div><label class="fl" for="name">Full name <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label><input type="text" id="name" autocomplete="name" required aria-required="true" /></div></div>
           <div class="field-row two" style="margin-top:12px;">
-            <div><label class="fl">Phone *</label><input type="text" id="phone" inputmode="tel" autocomplete="tel" required /></div>
-            <div><label class="fl">Email</label><input type="text" id="email" inputmode="email" autocomplete="email" /></div>
+            <div><label class="fl" for="phone">Phone <span class="req" aria-hidden="true">*</span><span class="sr-only">(required)</span></label><input type="text" id="phone" inputmode="tel" autocomplete="tel" required aria-required="true" /></div>
+            <div><label class="fl" for="email">Email</label><input type="text" id="email" inputmode="email" autocomplete="email" /></div>
           </div>
           <div class="step">Notes</div>
-          <div class="field-row"><div><input type="text" id="notes" placeholder="Anything we should know?" /></div></div>
+          <div class="field-row"><div><label class="fl" for="notes">Notes (optional)</label><input type="text" id="notes" placeholder="Anything we should know?" /></div></div>
 
           <button class="btn btn-primary" id="continueBtn" type="submit">Continue to Sign →</button>
-          <p class="err" id="err"></p>
+          <p class="err" id="err" role="alert" aria-live="assertive"></p>
           <p class="qnote">Next: review &amp; e-sign the rental agreement, then pay the balance securely.</p>
         </form>
       </aside>

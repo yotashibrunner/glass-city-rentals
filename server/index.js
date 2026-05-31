@@ -3,6 +3,11 @@
 const path = require('path');
 const express = require('express');
 const config = require('./config');
+const monitoring = require('./services/monitoring');
+
+// Initialize error monitoring as early as possible (no-op without SENTRY_DSN).
+monitoring.init();
+const { reportError } = monitoring;
 
 const app = express();
 
@@ -71,16 +76,40 @@ app.use('/', publicPageRoutes);
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
+// API/webhook requests get JSON; browser page requests get a rendered HTML page.
+function wantsJson(req) {
+  return req.path.startsWith('/api/') || req.path.startsWith('/webhooks/')
+    || (req.get('accept') || '').includes('application/json');
+}
+
 // --- 404 ---
 app.use((req, res) => {
-  res.status(404).send('Not Found');
+  if (wantsJson(req)) {
+    return res.status(404).json({ error: 'Not Found' });
+  }
+  res.status(404).render('error', {
+    code: 404,
+    title: 'Page not found',
+    message: "We couldn't find that page. It may have moved, or the link may be out of date.",
+  });
 });
 
 // --- Centralized error handler ---
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('[error]', err);
-  res.status(err.status || 500).json({ error: 'Internal Server Error' });
+  reportError(err, req);
+  const status = err.status || 500;
+  if (wantsJson(req)) {
+    return res.status(status).json({ error: status === 500 ? 'Internal Server Error' : (err.message || 'Error') });
+  }
+  res.status(status).render('error', {
+    code: status,
+    title: status === 404 ? 'Page not found' : 'Something went wrong',
+    message: status === 404
+      ? "We couldn't find that page."
+      : 'Something broke on our end. Please try again, or call us and we’ll sort it out.',
+  });
 });
 
 const server = app.listen(config.port, () => {

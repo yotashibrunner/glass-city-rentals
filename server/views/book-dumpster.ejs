@@ -12,15 +12,16 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-head">
     <div class="site-head-inner">
       <a class="back" href="/#fleet">‹ <span>Back to Fleet</span></a>
       <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
-      <a class="call" href="tel:+14196543584">Call</a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" id="main">
     <div class="detail">
       <!-- Left: info -->
       <section>
@@ -66,23 +67,24 @@
 
         <div class="step">Step 1 — Drop-off Date</div>
         <div class="field-row">
+          <label class="sr-only" for="dropDate">Drop-off date</label>
           <input type="date" id="dropDate" min="<%= new Date().toISOString().slice(0,10) %>" />
         </div>
 
         <div class="step">Step 2 — How Long?</div>
         <div class="field-row two">
           <div>
-            <label class="fl">Extra days beyond <%= trailer.flat_drop_off_days || 3 %></label>
+            <label class="fl" for="extraDays">Extra days beyond <%= trailer.flat_drop_off_days || 3 %></label>
             <input type="number" id="extraDays" min="0" value="0" />
           </div>
           <div>
-            <label class="fl">Tires (if any)</label>
+            <label class="fl" for="tireCount">Tires (if any)</label>
             <input type="number" id="tireCount" min="0" value="0" />
           </div>
         </div>
 
         <div class="step">Step 3 — Your Estimate</div>
-        <div class="quote">
+        <div class="quote" aria-live="polite" aria-label="Dumpster estimate">
           <div class="qrow"><span>Drop-off (<%= trailer.flat_drop_off_days || 3 %> days incl.)</span><span><%= fmt(trailer.flat_drop_off_cents) %></span></div>
           <div class="qrow" id="q-extra-row" hidden><span id="q-extra-label">Extra days</span><span id="q-extra">—</span></div>
           <div class="qrow"><span>Subtotal</span><span id="q-base">—</span></div>
@@ -92,7 +94,7 @@
             <span class="val" id="q-total">$0</span>
           </div>
           <div class="qrow" id="q-tire-row" hidden><span class="warn">Possible tire fees</span><span id="q-tire">—</span></div>
-          <p class="err" id="q-err"></p>
+          <p class="err" id="q-err" role="alert"></p>
           <p class="qnote">Full balance is charged at booking. Tire fees, if any, are settled at pickup. A signed rental agreement is required.</p>
         </div>
 

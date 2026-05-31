@@ -12,15 +12,16 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-head">
     <div class="site-head-inner">
       <a class="back" href="/#fleet">‹ <span>Back to Fleet</span></a>
       <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
-      <a class="call" href="tel:+14196543584">Call</a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container" id="main">
     <div class="detail">
       <!-- Left: trailer info -->
       <section>
@@ -73,11 +74,11 @@
         <h2>Check Availability</h2>
         <p class="dim mono" style="font-size:12px;">Drag-select your dates for a live quote.</p>
 
-        <div class="step">Step 1 — Pick Dates</div>
-        <div id="calendar"></div>
+        <div class="step" id="cal-step">Step 1 — Pick Dates</div>
+        <div id="calendar" role="group" aria-labelledby="cal-step"></div>
 
         <div class="step">Step 2 — Your Estimate</div>
-        <div class="quote">
+        <div class="quote" aria-live="polite" aria-label="Rental estimate">
           <div class="qrow"><span>Dates</span><span id="q-dates">—</span></div>
           <div class="qrow"><span>Days</span><span id="q-days">—</span></div>
           <div class="qrow"><span>Daily rate</span><span><%= trailer.daily_rate == null ? '—' : fmt(trailer.daily_rate) %></span></div>
@@ -87,7 +88,7 @@
             <span class="lbl">Total</span>
             <span class="val" id="q-total">$0</span>
           </div>
-          <p class="err" id="q-err"></p>
+          <p class="err" id="q-err" role="alert"></p>
           <p class="qnote">Estimate for customer pickup. Full balance is charged at booking. A signed rental agreement is required before pickup.</p>
         </div>
 
