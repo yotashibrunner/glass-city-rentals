@@ -60,13 +60,14 @@ async function main() {
   const email = String(args.email || '').trim().toLowerCase();
   if (!email || !EMAIL_RE.test(email)) {
     console.error('Error: a valid --email is required.');
-    console.error('Usage: npm run create-admin -- --email you@example.com [--name "Name"] [--role admin] [--phone +14195551234] [--password secret]');
+    console.error('Usage: npm run create-admin -- --email you@example.com [--name "Name"] [--role admin|operator|owner] [--phone +14195551234] [--password secret]');
     process.exit(1);
   }
 
   const name = args.name ? String(args.name) : null;
   const phone = args.phone ? String(args.phone) : null;
-  const role = args.role === 'admin' ? 'admin' : 'operator';
+  const ROLES = ['admin', 'operator', 'owner'];
+  const role = ROLES.includes(args.role) ? args.role : 'operator';
 
   let password = args.password ? String(args.password) : '';
   if (!password) {

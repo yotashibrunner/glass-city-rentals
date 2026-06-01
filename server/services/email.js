@@ -140,4 +140,47 @@ async function sendTest(to) {
   }
 }
 
-module.exports = { isConfigured, sendBookingConfirmation, sendBookingReminder, sendTest };
+// Email the monthly statement PDF to one or more recipients. Returns
+// {id}/{skipped}/{error} so callers can report the outcome.
+async function sendStatement(recipients, pdf, statement) {
+  const resend = getClient();
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY is not set.' };
+  const to = (Array.isArray(recipients) ? recipients : [recipients])
+    .map((e) => (e || '').trim()).filter(Boolean);
+  if (!to.length) return { skipped: true, reason: 'No recipients (set OWNER_EMAIL and/or operator emails).' };
+
+  const t = statement.totals;
+  const td = 'style="padding:4px 14px 4px 0;color:#555"';
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#0a0d0a;max-width:560px">
+      <h2 style="color:#1faa30">Operator statement — ${statement.label}</h2>
+      <table style="font-size:14px;border-collapse:collapse">
+        <tr><td ${td}>Bookings</td><td>${t.booking_count}</td></tr>
+        <tr><td ${td}>Gross revenue</td><td>${t.gross_fmt}</td></tr>
+        <tr><td ${td}>Stripe fees</td><td>- ${t.stripe_fees_fmt}</td></tr>
+        <tr><td ${td}>Net revenue</td><td><strong>${t.net_fmt}</strong></td></tr>
+        <tr><td ${td}>Commission (${(t.commission_rate * 100).toFixed(0)}%)</td><td>${t.commission_fmt}</td></tr>
+        <tr><td ${td}>Retainer (${t.retainer_tier})</td><td>${t.retainer_fmt}</td></tr>
+        <tr><td ${td}><strong>Total due to operator</strong></td><td><strong style="color:#1faa30">${t.total_due_fmt}</strong></td></tr>
+      </table>
+      <p>The full itemized statement is attached as a PDF.</p>
+      <p style="color:#888;font-size:12px">${'Glass City Trailer Rentals LLC'} · (419) 654-3584</p>
+    </div>`;
+
+  const filename = `glass-city-statement-${statement.year}-${String(statement.month).padStart(2, '0')}.pdf`;
+  try {
+    const { data, error } = await resend.emails.send({
+      from: config.fromEmail,
+      to,
+      subject: `Glass City operator statement — ${statement.label}`,
+      html,
+      attachments: pdf ? [{ filename, content: pdf }] : undefined,
+    });
+    if (error) return { error: error.message || JSON.stringify(error) };
+    return { id: data && data.id, to };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+module.exports = { isConfigured, sendBookingConfirmation, sendBookingReminder, sendTest, sendStatement };

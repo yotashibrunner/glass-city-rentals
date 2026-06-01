@@ -45,4 +45,18 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
-module.exports = { requireAuth, requireAdmin };
+// Gate for a set of roles, e.g. requireRole('admin', 'owner'). Must run after
+// requireAuth. Returns 403 for any role not in the allow-list.
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'You do not have access to this.', code: 'forbidden' });
+    }
+    return next();
+  };
+}
+
+module.exports = { requireAuth, requireAdmin, requireRole };

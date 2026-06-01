@@ -547,6 +547,34 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; bo
 .notif-actions .btn { flex: 1; min-width: 120px; }
 .notif-card .error { margin-top: 10px; }
 
+/* ── Reports ────────────────────────────────────────────────────────── */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.stat-card.stat-total { grid-column: 1 / -1; border-color: var(--accent); }
+.stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.stat-val { font-size: 1.4rem; font-weight: 700; }
+.stat-total .stat-val { color: #6fd58c; }
+
+.rep-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rep-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.rep-row:last-child { border-bottom: 0; }
+.rep-main { font-size: 0.9rem; }
+.rep-amt { font-weight: 700; white-space: nowrap; }
+.rep-booking .rep-meta { display: flex; flex-direction: column; gap: 3px; }
+.rep-sub { font-size: 0.78rem; }
+
+/* ── Audit log ──────────────────────────────────────────────────────── */
+.audit-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.audit-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
+}
+.audit-top { font-weight: 600; font-size: 0.9rem; }
+.audit-sub { font-size: 0.78rem; }
+
 /* ── Misc ───────────────────────────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.9rem; }
 .welcome { margin: 4px 2px 0; }

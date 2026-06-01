@@ -49,6 +49,12 @@ router.post('/login', loginLimiter, async (req, res, next) => {
     }
 
     await db.query('UPDATE admin_users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+    // Audit the login (best-effort — never block sign-in on it).
+    db.query(
+      `INSERT INTO audit_log (admin_user_id, action_by, action, entity_type, entity_id, details)
+       VALUES ($1, $1, 'auth.login', 'admin_user', $1, '{}'::jsonb)`,
+      [user.id]
+    ).catch((e) => console.error('[auth] login audit failed:', e.message));
 
     const tokens = issueTokens(user);
     return res.json({

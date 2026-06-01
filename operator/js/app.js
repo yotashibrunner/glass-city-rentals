@@ -281,11 +281,16 @@
     root.querySelector('[data-nav="calendar"]').addEventListener('click', () => renderCalendar());
     root.querySelector('[data-nav="accounts"]').addEventListener('click', () => renderAccounts());
     root.querySelector('[data-nav="diagnostics"]').addEventListener('click', () => renderDiagnostics());
+    root.querySelector('[data-nav="reports"]').addEventListener('click', () => renderReports());
+    root.querySelector('[data-nav="audit"]').addEventListener('click', () => renderAudit());
 
-    // Admin-only nav items (inventory, calendar, accounts) are hidden for
-    // operators, who keep the daily workflow (dashboard, schedule, detail).
-    const isAdmin = !!(api.auth.user && api.auth.user.role === 'admin');
+    // Role-gated nav: admin-only items (inventory, calendar, accounts,
+    // diagnostics) for admins; reports + audit for admins and owners.
+    const role = api.auth.user && api.auth.user.role;
+    const isAdmin = role === 'admin';
+    const canReport = role === 'admin' || role === 'owner';
     root.querySelectorAll('[data-admin]').forEach((el) => { el.hidden = !isAdmin; });
+    root.querySelectorAll('[data-reports]').forEach((el) => { el.hidden = !canReport; });
 
     setupNotifications();
 
@@ -421,8 +426,10 @@
       const pickupBtn = root.querySelector('[data-pickup]');
       const returnBtn = root.querySelector('[data-return]');
       const doneEl = root.querySelector('[data-done]');
-      const canPickup = booking.status === 'paid' || booking.status === 'confirmed';
-      const canReturn = booking.status === 'out';
+      // Owners are read-only — they never see the mark buttons.
+      const canAct = !(api.auth.user && api.auth.user.role === 'owner');
+      const canPickup = canAct && (booking.status === 'paid' || booking.status === 'confirmed');
+      const canReturn = canAct && booking.status === 'out';
       pickupBtn.textContent = isDelivery ? 'Mark Delivered' : 'Mark Picked Up';
       returnBtn.textContent = isDelivery ? 'Mark Retrieved' : 'Mark Returned';
       pickupBtn.hidden = !canPickup;
@@ -1437,6 +1444,239 @@
       '/api/operator/test-sms',
       'Sent — check the phone for the text.'
     );
+  }
+
+  // ── Reports (admin + owner) ──────────────────────────────────────────────
+  function currentYM() { return new Date().toISOString().slice(0, 7); }
+  function ymRange(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return { from: `${ym}-01`, to: `${ym}-${String(last).padStart(2, '0')}`, y, m };
+  }
+
+  async function renderReports() {
+    mount('tpl-reports');
+    root.querySelector('[data-back]').addEventListener('click', () => renderDashboard());
+    const monthEl = root.querySelector('[data-month]');
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const reportEl = root.querySelector('[data-report]');
+    const isAdmin = api.auth.user && api.auth.user.role === 'admin';
+    monthEl.value = currentYM();
+
+    async function load() {
+      const ym = monthEl.value || currentYM();
+      const { from, to, y, m } = ymRange(ym);
+      loadingEl.hidden = false; errEl.hidden = true; reportEl.hidden = true;
+      let summary; let trailers; let bookings;
+      try {
+        const qs = `from=${from}&to=${to}`;
+        [summary, trailers, bookings] = await Promise.all([
+          api.apiFetch(`/api/operator/reports/summary?${qs}`).then((d) => d.summary),
+          api.apiFetch(`/api/operator/reports/by-trailer?${qs}`).then((d) => d.trailers),
+          api.apiFetch(`/api/operator/reports/bookings?${qs}`).then((d) => d.bookings),
+        ]);
+      } catch (err) {
+        if (handleAuth(err)) return;
+        loadingEl.hidden = true;
+        errEl.textContent = err.message || 'Could not load reports.';
+        errEl.hidden = false;
+        return;
+      }
+      loadingEl.hidden = true;
+
+      // Summary cards.
+      const cards = [
+        ['Gross Revenue', summary.gross_fmt],
+        ['Stripe Fees', '- ' + summary.stripe_fees_fmt],
+        ['Net Revenue', summary.net_fmt],
+        [`Commission (${Math.round(summary.commission_rate * 100)}%)`, summary.commission_fmt],
+        [`Retainer · ${summary.retainer_tier}`, summary.retainer_fmt],
+        ['Total Due to Operator', summary.total_due_fmt],
+      ];
+      const grid = root.querySelector('[data-summary]');
+      grid.replaceChildren();
+      cards.forEach(([label, val], i) => {
+        const c = document.createElement('div');
+        c.className = 'stat-card' + (i === cards.length - 1 ? ' stat-total' : '');
+        c.innerHTML = `<span class="stat-label"></span><span class="stat-val"></span>`;
+        c.querySelector('.stat-label').textContent = label;
+        c.querySelector('.stat-val').textContent = val || '$0';
+        grid.appendChild(c);
+      });
+
+      // Statement / CSV (admin only).
+      const genCard = root.querySelector('[data-gen-card]');
+      genCard.hidden = !isAdmin;
+      if (isAdmin && !genCard.dataset.wired) {
+        genCard.dataset.wired = '1';
+        const genErr = root.querySelector('[data-gen-error]');
+        const genOk = root.querySelector('[data-gen-ok]');
+        root.querySelector('[data-generate]').addEventListener('click', async (e) => {
+          genErr.hidden = true; genOk.hidden = true;
+          const ymNow = monthEl.value || currentYM(); const [yy, mm] = ymNow.split('-').map(Number);
+          const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Sending…';
+          try {
+            const r = await api.apiFetch('/api/operator/reports/send-statement', {
+              method: 'POST', body: JSON.stringify({ month: mm, year: yy }),
+            });
+            genOk.textContent = `Statement for ${r.label} emailed to ${r.recipients.join(', ')} (total due ${r.total_due_fmt}).`;
+            genOk.hidden = false;
+          } catch (err) {
+            if (handleAuth(err)) return;
+            genErr.textContent = err.message || 'Could not send statement.';
+            genErr.hidden = false;
+          } finally { btn.disabled = false; btn.textContent = 'Generate & email statement'; }
+        });
+        root.querySelector('[data-csv]').addEventListener('click', async () => {
+          const ymNow = monthEl.value || currentYM(); const { from: f, to: t } = ymRange(ymNow);
+          try {
+            const res = await fetch(`/api/operator/reports/export.csv?from=${f}&to=${t}`, {
+              headers: { Authorization: `Bearer ${api.auth.access}` },
+            });
+            if (!res.ok) throw new Error('Export failed (' + res.status + ')');
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `glass-city-bookings-${ymNow}.csv`;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+          } catch (err) { genErr.textContent = err.message; genErr.hidden = false; }
+        });
+      }
+
+      // By-trailer.
+      const btEl = root.querySelector('[data-by-trailer]');
+      btEl.replaceChildren();
+      root.querySelector('[data-bt-empty]').hidden = trailers.length > 0;
+      for (const t of trailers) {
+        const li = document.createElement('li');
+        li.className = 'rep-row';
+        li.innerHTML = `<span class="rep-main"></span><span class="rep-amt"></span>`;
+        li.querySelector('.rep-main').textContent = `${t.trailer} · ${t.count} booking${t.count === 1 ? '' : 's'} · ${t.pct}%`;
+        li.querySelector('.rep-amt').textContent = t.gross_fmt;
+        btEl.appendChild(li);
+      }
+
+      // Bookings.
+      const bkEl = root.querySelector('[data-bookings]');
+      bkEl.replaceChildren();
+      root.querySelector('[data-bk-count]').textContent = bookings.length ? `(${bookings.length})` : '';
+      root.querySelector('[data-bk-empty]').hidden = bookings.length > 0;
+      for (const b of bookings) {
+        const li = document.createElement('li');
+        li.className = 'rep-row rep-booking';
+        const main = document.createElement('span'); main.className = 'rep-main';
+        main.textContent = `${fmtDay(b.date)} · ${b.customer_name} · ${b.trailer_name}`;
+        const sub = document.createElement('span'); sub.className = 'rep-sub muted';
+        sub.textContent = `gross ${b.gross_fmt} · fee ${b.stripe_fee_fmt} · net ${b.net_fmt} · comm ${b.commission_fmt} · ${b.status}`;
+        const wrap = document.createElement('span'); wrap.className = 'rep-meta';
+        wrap.append(main, sub);
+        li.appendChild(wrap);
+        bkEl.appendChild(li);
+      }
+
+      reportEl.hidden = false;
+    }
+
+    monthEl.addEventListener('change', load);
+    load();
+  }
+
+  // ── Audit log (admin + owner) ────────────────────────────────────────────
+  const ACTION_LABELS = {
+    'auth.login': 'Logged in',
+    'booking.create': 'Booking created',
+    'booking.paid': 'Booking paid',
+    'booking.update': 'Booking status change',
+    'trailer.update': 'Trailer/pricing edit',
+    'blackout.create': 'Dates blocked',
+    'blackout.delete': 'Blackout removed',
+    'account.create': 'Account created',
+    'account.update': 'Account updated',
+    'account.deactivate': 'Account deactivated',
+  };
+  function actionLabel(a) { return ACTION_LABELS[a] || a; }
+  function detailText(d) {
+    if (!d || typeof d !== 'object') return '';
+    if (d.status) return `→ ${d.status}`;
+    if (d.fields) return d.fields.join(', ');
+    if (d.ref) return d.ref;
+    if (d.amount_cents != null) return fmtMoney(d.amount_cents) || '';
+    return '';
+  }
+
+  async function renderAudit() {
+    mount('tpl-audit');
+    root.querySelector('[data-back]').addEventListener('click', () => renderDashboard());
+    const fromEl = root.querySelector('[data-from]');
+    const toEl = root.querySelector('[data-to]');
+    const opEl = root.querySelector('[data-operator]');
+    const actEl = root.querySelector('[data-action]');
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const listEl = root.querySelector('[data-list]');
+    const emptyEl = root.querySelector('[data-empty]');
+    const moreBtn = root.querySelector('[data-more]');
+    const LIMIT = 50;
+    let offset = 0;
+
+    // Populate filters: action types (admin+owner), operators (admin only —
+    // ignore if forbidden).
+    api.apiFetch('/api/operator/audit/actions').then((d) => {
+      for (const a of d.actions || []) {
+        const o = document.createElement('option'); o.value = a; o.textContent = actionLabel(a); actEl.appendChild(o);
+      }
+    }).catch(() => {});
+    api.apiFetch('/api/operator/accounts').then((d) => {
+      for (const a of d.accounts || []) {
+        const o = document.createElement('option'); o.value = a.id; o.textContent = a.name || a.email; opEl.appendChild(o);
+      }
+    }).catch(() => {}); // owners can't list accounts — that's fine.
+
+    function qs() {
+      const p = new URLSearchParams();
+      if (fromEl.value) p.set('from', fromEl.value);
+      if (toEl.value) p.set('to', toEl.value);
+      if (opEl.value) p.set('user_id', opEl.value);
+      if (actEl.value) p.set('action', actEl.value);
+      p.set('limit', LIMIT); p.set('offset', offset);
+      return p.toString();
+    }
+
+    async function load(reset) {
+      if (reset) { offset = 0; listEl.replaceChildren(); }
+      loadingEl.hidden = false; errEl.hidden = true; emptyEl.hidden = true;
+      let data;
+      try {
+        data = await api.apiFetch(`/api/operator/audit?${qs()}`);
+      } catch (err) {
+        if (handleAuth(err)) return;
+        loadingEl.hidden = true;
+        errEl.textContent = err.message || 'Could not load the audit log.';
+        errEl.hidden = false;
+        return;
+      }
+      loadingEl.hidden = true;
+      for (const it of data.items) {
+        const li = document.createElement('li');
+        li.className = 'audit-row';
+        const top = document.createElement('span'); top.className = 'audit-top';
+        top.textContent = `${actionLabel(it.action)}${it.entity ? ' · ' + it.entity : ''}`;
+        const sub = document.createElement('span'); sub.className = 'audit-sub muted';
+        const dt = detailText(it.detail);
+        sub.textContent = `${fmtDateTime(it.at)} · ${it.operator}${dt ? ' · ' + dt : ''}`;
+        li.append(top, sub);
+        listEl.appendChild(li);
+      }
+      offset += data.items.length;
+      emptyEl.hidden = offset > 0;
+      moreBtn.hidden = offset >= data.total;
+    }
+
+    root.querySelector('[data-apply]').addEventListener('click', () => load(true));
+    moreBtn.addEventListener('click', () => load(false));
+    load(true);
   }
 
   // ── Boot ────────────────────────────────────────────────────────────────

@@ -10,8 +10,9 @@ releaseCommand = "npm run migrate:up"
 healthcheckPath = "/health"
 
 # Cron jobs.
-#   8am daily — 24h customer reminders (email + SMS) + morning operator summary.
-#   hourly    — 1-hour-before push for pickups, deliveries, and retrievals.
+#   8am daily      — 24h customer reminders (email + SMS) + morning operator summary.
+#   hourly         — 1-hour-before push for pickups, deliveries, and retrievals.
+#   9am 1st of mo. — prior-month operator statement PDF emailed to owner + operators.
 # If Railway ignores [[cronJobs]] here, set the same schedules + commands on the
 # service's Cron settings in the dashboard.
 [[cronJobs]]
@@ -21,3 +22,7 @@ command = "node scripts/send-reminders.js"
 [[cronJobs]]
 schedule = "0 * * * *"
 command = "node scripts/send-reminders.js hourly"
+
+[[cronJobs]]
+schedule = "0 9 1 * *"
+command = "node scripts/send-statement.js"

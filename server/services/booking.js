@@ -170,6 +170,13 @@ async function createBooking(input) {
     }
     if (!booking) throw new Error('Could not allocate a booking reference.');
 
+    // Audit the creation (customer action — no operator).
+    await client.query(
+      `INSERT INTO audit_log (action, entity_type, entity_id, details)
+       VALUES ('booking.create', 'booking', $1, $2)`,
+      [booking.id, JSON.stringify({ ref: booking.ref_code, total_cents: totalCents, fulfillment })]
+    );
+
     await client.query('COMMIT');
     return { id: booking.id, ref_code: booking.ref_code };
   } catch (err) {
@@ -269,6 +276,13 @@ async function markPaidBySession(sessionId, paymentIntentId, amountCents, custom
     [sessionId, amountCents || 0, paymentIntentId || null]
   );
   if (!rows.length) return null; // unknown session or already paid
+
+  // Audit the payment (Stripe-driven — no operator).
+  await pool.query(
+    `INSERT INTO audit_log (action, entity_type, entity_id, details)
+     VALUES ('booking.paid', 'booking', $1, $2)`,
+    [rows[0].id, JSON.stringify({ amount_cents: amountCents || 0 })]
+  ).catch((e) => console.error('[booking] paid audit failed:', e.message));
 
   const email = (customerEmail || '').trim().toLowerCase();
   if (email) {

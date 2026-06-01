@@ -32,7 +32,10 @@ const smsSvc = require('../services/sms');
 const config = require('../config');
 const { OCCUPYING_STATUSES } = require('../services/availability');
 const accountsSvc = require('../services/accounts');
-const { requireAdmin } = require('../middleware/auth');
+const reportsSvc = require('../services/reports');
+const auditSvc = require('../services/audit');
+const { generateStatementPdf } = require('../services/statement');
+const { requireAdmin, requireRole } = require('../middleware/auth');
 const { formatCents } = require('../utils/money');
 const { todayUTC, addDays, parseDateOnly } = require('../utils/date');
 
@@ -233,7 +236,7 @@ router.get('/bookings/:id', async (req, res, next) => {
 
 // PATCH /api/operator/bookings/:id — mark picked up ('out') / returned, and/or
 // edit operator notes. Returning a booking flips its trailer back to available.
-router.patch('/bookings/:id', async (req, res, next) => {
+router.patch('/bookings/:id', requireRole('admin', 'operator'), async (req, res, next) => {
   const { id } = req.params;
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   try {
@@ -431,6 +434,117 @@ router.delete('/accounts/:id', requireAdmin, async (req, res, next) => {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
   }
+});
+
+// ── Reports & audit (admin + owner; export/send are admin only) ────────
+const reportAccess = requireRole('admin', 'owner');
+
+// Resolve a [from, to) range from query (YYYY-MM-DD). `to` is treated as an
+// inclusive day (made exclusive by +1). Defaults to the current calendar month.
+function reportRange(req) {
+  const today = todayUTC();
+  const from = parseDateOnly(req.query.from)
+    || new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+  const toQ = parseDateOnly(req.query.to);
+  const to = toQ ? addDays(toQ, 1)
+    : new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1));
+  return { fromIso: from.toISOString(), toIso: to.toISOString() };
+}
+
+router.get('/reports/summary', reportAccess, async (req, res, next) => {
+  try {
+    const { fromIso, toIso } = reportRange(req);
+    res.json({ from: fromIso, to: toIso, summary: await reportsSvc.summary(fromIso, toIso) });
+  } catch (err) { next(err); }
+});
+
+router.get('/reports/bookings', reportAccess, async (req, res, next) => {
+  try {
+    const { fromIso, toIso } = reportRange(req);
+    res.json({ from: fromIso, to: toIso, bookings: await reportsSvc.bookingsBreakdown(fromIso, toIso) });
+  } catch (err) { next(err); }
+});
+
+router.get('/reports/by-trailer', reportAccess, async (req, res, next) => {
+  try {
+    const { fromIso, toIso } = reportRange(req);
+    res.json({ from: fromIso, to: toIso, trailers: await reportsSvc.byTrailer(fromIso, toIso) });
+  } catch (err) { next(err); }
+});
+
+// GET /reports/statement?month=&year= — defaults to the current month.
+router.get('/reports/statement', reportAccess, async (req, res, next) => {
+  try {
+    const now = todayUTC();
+    const month = req.query.month || (now.getUTCMonth() + 1);
+    const year = req.query.year || now.getUTCFullYear();
+    res.json({ statement: await reportsSvc.statement(month, year) });
+  } catch (err) { next(err); }
+});
+
+// GET /reports/export.csv?from&to — admin only.
+router.get('/reports/export.csv', requireAdmin, async (req, res, next) => {
+  try {
+    const { fromIso, toIso } = reportRange(req);
+    const rows = await reportsSvc.bookingsBreakdown(fromIso, toIso);
+    const stamp = fromIso.slice(0, 7); // YYYY-MM
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="glass-city-bookings-${stamp}.csv"`);
+    res.send(reportsSvc.toCsv(rows));
+  } catch (err) { next(err); }
+});
+
+// POST /reports/send-statement — generate the month's statement PDF and email
+// it to OWNER_EMAIL + all active operator/admin accounts. Body: { month, year }
+// (defaults to the current month). Admin only.
+router.post('/reports/send-statement', requireAdmin, async (req, res, next) => {
+  try {
+    const now = todayUTC();
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const month = body.month || (now.getUTCMonth() + 1);
+    const year = body.year || now.getUTCFullYear();
+
+    const statement = await reportsSvc.statement(month, year);
+    const pdf = await generateStatementPdf(statement);
+
+    // Recipients: configured owner + every active operator/admin email.
+    const { rows } = await query(
+      "SELECT email FROM admin_users WHERE active = true AND role IN ('admin','operator') AND email IS NOT NULL"
+    );
+    const recipients = [...new Set([config.ownerEmail, ...rows.map((r) => r.email)].filter(Boolean))];
+
+    const result = await emailSvc.sendStatement(recipients, pdf, statement);
+    if (result.skipped) return res.status(503).json({ error: result.reason, recipients });
+    if (result.error) return res.status(502).json({ error: result.error, recipients });
+    res.json({ ok: true, recipients, label: statement.label, total_due_fmt: statement.totals.total_due_fmt });
+  } catch (err) { next(err); }
+});
+
+// GET /audit?from&to&user_id&action&limit&offset — admin + owner.
+router.get('/audit', reportAccess, async (req, res, next) => {
+  try {
+    const { fromIso, toIso } = (() => {
+      // Audit defaults to "all time" unless a range is given.
+      const from = parseDateOnly(req.query.from);
+      const toQ = parseDateOnly(req.query.to);
+      return {
+        fromIso: from ? from.toISOString() : null,
+        toIso: toQ ? addDays(toQ, 1).toISOString() : null,
+      };
+    })();
+    const data = await auditSvc.listAudit({
+      from: fromIso, to: toIso, userId: req.query.user_id, action: req.query.action,
+      limit: req.query.limit, offset: req.query.offset,
+    });
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+// GET /audit/actions — distinct action types, for the filter dropdown.
+router.get('/audit/actions', reportAccess, async (req, res, next) => {
+  try {
+    res.json({ actions: await auditSvc.actionTypes() });
+  } catch (err) { next(err); }
 });
 
 // GET /api/operator/trailers — the full fleet, ordered for display, with live

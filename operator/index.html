@@ -107,6 +107,22 @@
           </span>
           <span class="nav-chevron" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="nav-item" data-nav="reports" data-reports hidden>
+          <span class="nav-icon" aria-hidden="true">📊</span>
+          <span class="nav-text">
+            <span class="nav-label">Reports</span>
+            <span class="nav-sub muted">Revenue &amp; statements</span>
+          </span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="audit" data-reports hidden>
+          <span class="nav-icon" aria-hidden="true">📜</span>
+          <span class="nav-text">
+            <span class="nav-label">Audit Log</span>
+            <span class="nav-sub muted">Who did what, when</span>
+          </span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
       </nav>
 
       <p class="error" data-error hidden></p>
@@ -547,6 +563,83 @@
         <p class="error" data-sms-error hidden></p>
         <p class="saved muted" data-sms-ok hidden></p>
       </section>
+    </main>
+  </template>
+
+  <!-- ── Reports (admin + owner) ────────────────────────────────────── -->
+  <template id="tpl-reports">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Reports</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <div class="card date-bar">
+        <label class="sr-only" for="rep-month">Month</label>
+        <input type="month" id="rep-month" class="date-input" data-month />
+      </div>
+      <p class="empty" data-loading>Loading…</p>
+      <p class="error" data-error hidden></p>
+
+      <div data-report hidden>
+        <div class="stat-grid" data-summary></div>
+
+        <section class="card" data-gen-card hidden>
+          <h2>Statement</h2>
+          <div class="notif-actions">
+            <button type="button" class="btn btn-primary" data-generate>Generate &amp; email statement</button>
+            <button type="button" class="btn btn-ghost" data-csv>Download CSV</button>
+          </div>
+          <p class="error" data-gen-error hidden></p>
+          <p class="saved muted" data-gen-ok hidden></p>
+        </section>
+
+        <section class="card">
+          <h2>Revenue by trailer</h2>
+          <ul class="rep-list" data-by-trailer></ul>
+          <p class="empty" data-bt-empty hidden>No revenue in this period.</p>
+        </section>
+
+        <section class="card">
+          <h2>Bookings <span class="count" data-bk-count></span></h2>
+          <ul class="rep-list" data-bookings></ul>
+          <p class="empty" data-bk-empty hidden>No paid bookings in this period.</p>
+        </section>
+      </div>
+    </main>
+  </template>
+
+  <!-- ── Audit log (admin + owner) ──────────────────────────────────── -->
+  <template id="tpl-audit">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Audit Log</span>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <main class="screen content">
+      <div class="card">
+        <div class="field-row two">
+          <div><label class="fl" for="au-from">From</label><input type="date" id="au-from" class="date-input" data-from /></div>
+          <div><label class="fl" for="au-to">To</label><input type="date" id="au-to" class="date-input" data-to /></div>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label class="fl" for="au-operator">Operator</label>
+          <select id="au-operator" data-operator><option value="">All operators</option></select>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label class="fl" for="au-action">Action</label>
+          <select id="au-action" data-action><option value="">All actions</option></select>
+        </div>
+        <button type="button" class="btn btn-ghost" style="margin-top:12px;" data-apply>Apply filters</button>
+      </div>
+
+      <p class="empty" data-loading>Loading…</p>
+      <p class="error" data-error hidden></p>
+      <ul class="audit-list" data-list></ul>
+      <p class="empty" data-empty hidden>No matching audit entries.</p>
+      <button type="button" class="btn btn-ghost" data-more hidden>Load more</button>
     </main>
   </template>
 

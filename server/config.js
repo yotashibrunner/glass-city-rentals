@@ -73,6 +73,15 @@ const config = {
   // addition to any operator-account phone numbers).
   operatorPhone: process.env.OPERATOR_PHONE || '',
 
+  // ── Reporting / commission (audit + sales tracking) ─────────────────
+  // Operator commission rate on net revenue (default 15%). OWNER_EMAIL is the
+  // business owner's address; monthly statements go to it + operator accounts.
+  commissionRate: (() => {
+    const r = parseFloat(process.env.COMMISSION_RATE);
+    return Number.isFinite(r) && r >= 0 && r < 1 ? r : 0.15;
+  })(),
+  ownerEmail: process.env.OWNER_EMAIL || '',
+
   // ── Monitoring — Sentry (Phase 9) ───────────────────────────────────
   // Optional: when unset, error reporting is a no-op (errors still log to the
   // console). Set SENTRY_DSN to capture server errors.
