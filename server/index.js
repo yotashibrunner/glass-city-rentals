@@ -20,9 +20,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Stripe webhook needs the raw request body to verify the signature, so it is
-// registered before the JSON body parser.
+// registered before the JSON body parser. Use type: '*/*' so the raw body is
+// captured regardless of the Content-Type Stripe sends.
 const webhookRoutes = require('./routes/webhooks');
-app.use('/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
+app.use('/webhooks', express.raw({ type: '*/*' }), webhookRoutes);
 
 app.use(express.json({ limit: '1mb' })); // headroom for base64 signature images
 app.use(express.urlencoded({ extended: true }));
