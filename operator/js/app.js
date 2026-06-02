@@ -300,6 +300,7 @@
     root.querySelector('[data-nav="reports"]').addEventListener('click', () => renderReports());
     root.querySelector('[data-nav="audit"]').addEventListener('click', () => renderAudit());
     root.querySelector('[data-nav="settings"]').addEventListener('click', () => renderSettings());
+    root.querySelector('[data-nav="coupons"]').addEventListener('click', () => renderCoupons());
 
     // Role-gated nav: admin-only items (inventory, calendar, accounts,
     // diagnostics) for admins; reports + audit for admins and owners.
@@ -422,6 +423,16 @@
         root.querySelector('[data-deposit]').textContent = depositStatusLine(booking);
       } else {
         depRow.hidden = true;
+      }
+
+      const couponRow = root.querySelector('[data-coupon-row]');
+      if (booking.coupon_code || booking.discount_applied_cents > 0) {
+        couponRow.hidden = false;
+        const disc = booking.discount_applied_fmt || fmtMoney(booking.discount_applied_cents) || '$0';
+        root.querySelector('[data-coupon]').textContent =
+          booking.coupon_code ? `${booking.coupon_code} (−${disc})` : `−${disc}`;
+      } else {
+        couponRow.hidden = true;
       }
 
       if (booking.customer_notes) {
@@ -837,6 +848,149 @@
         errEl.textContent = err.message || 'Could not add the charge.';
         errEl.hidden = false;
         saveBtn.disabled = false; saveBtn.textContent = 'Add charge';
+      }
+    });
+  }
+
+  // ── Coupons (admin) ──────────────────────────────────────────────────────
+  function couponSummary(c) {
+    const parts = [c.value_fmt];
+    if (c.trailer_name) parts.push(c.trailer_name); else parts.push('all trailers');
+    if (c.min_booking_cents) parts.push(`min ${c.min_booking_fmt}`);
+    const uses = c.max_uses != null ? `${c.use_count}/${c.max_uses} used` : `${c.use_count} used`;
+    parts.push(uses);
+    if (c.expires_at) parts.push(`exp ${fmtDay(c.expires_at)}`);
+    return parts.join(' · ');
+  }
+
+  async function renderCoupons() {
+    mount('tpl-coupons');
+    root.querySelector('[data-back]').addEventListener('click', () => renderDashboard());
+    root.querySelector('[data-add]').addEventListener('click', () => renderCouponForm());
+
+    const loadingEl = root.querySelector('[data-loading]');
+    const errEl = root.querySelector('[data-error]');
+    const listEl = root.querySelector('[data-list]');
+    const emptyEl = root.querySelector('[data-empty]');
+
+    let coupons;
+    try {
+      const data = await api.apiFetch('/api/operator/coupons');
+      coupons = data.coupons || [];
+    } catch (err) {
+      if (handleAuth(err)) return;
+      loadingEl.hidden = true;
+      errEl.textContent = err.message || 'Could not load coupons.';
+      errEl.hidden = false;
+      return;
+    }
+    loadingEl.hidden = true;
+    if (!coupons.length) { emptyEl.hidden = false; return; }
+
+    const tpl = document.getElementById('tpl-coupon-row');
+    for (const c of coupons) {
+      const node = tpl.content.cloneNode(true);
+      node.querySelector('[data-code]').textContent = c.code;
+      node.querySelector('[data-sub]').textContent = couponSummary(c);
+      const statusEl = node.querySelector('[data-status]');
+      statusEl.textContent = c.active ? 'Active' : 'Inactive';
+      statusEl.className = `badge ${c.active ? 'badge-ok' : 'badge-oos'}`;
+
+      const toggleEl = node.querySelector('[data-toggle]');
+      toggleEl.textContent = c.active ? 'Deactivate' : 'Activate';
+      toggleEl.classList.add(c.active ? 'btn-danger' : 'btn-restore');
+      toggleEl.addEventListener('click', async () => {
+        toggleEl.disabled = true;
+        try {
+          await api.apiFetch(`/api/operator/coupons/${c.id}`, {
+            method: 'PATCH', body: JSON.stringify({ active: !c.active }),
+          });
+          renderCoupons();
+        } catch (err) {
+          if (handleAuth(err)) return;
+          errEl.textContent = err.message || 'Could not update.';
+          errEl.hidden = false;
+          toggleEl.disabled = false;
+        }
+      });
+
+      // Deletable only while never used.
+      const delEl = node.querySelector('[data-del]');
+      if (c.use_count === 0) {
+        delEl.hidden = false;
+        delEl.addEventListener('click', async () => {
+          if (!window.confirm(`Delete coupon ${c.code}?`)) return;
+          try {
+            await api.apiFetch(`/api/operator/coupons/${c.id}`, { method: 'DELETE' });
+            renderCoupons();
+          } catch (err) {
+            if (handleAuth(err)) return;
+            errEl.textContent = err.message || 'Could not delete.';
+            errEl.hidden = false;
+          }
+        });
+      }
+      listEl.appendChild(node);
+    }
+    listEl.hidden = false;
+  }
+
+  function renderCouponForm() {
+    mount('tpl-coupon-form');
+    root.querySelector('[data-back]').addEventListener('click', () => renderCoupons());
+
+    const typeEl = root.querySelector('#cf-type');
+    const valueField = root.querySelector('[data-value-field]');
+    const valueLabel = root.querySelector('[data-value-label]');
+    const valueEl = root.querySelector('#cf-value');
+    const trailerEl = root.querySelector('#cf-trailer');
+    const errEl = root.querySelector('[data-error]');
+    const savedEl = root.querySelector('[data-saved]');
+    const saveBtn = root.querySelector('[data-save]');
+
+    // Populate the trailer restriction dropdown.
+    api.apiFetch('/api/operator/trailers').then((d) => {
+      for (const t of d.trailers || []) {
+        const o = document.createElement('option');
+        o.value = t.id; o.textContent = t.name; trailerEl.appendChild(o);
+      }
+    }).catch(() => {});
+
+    function syncType() {
+      const t = typeEl.value;
+      valueField.hidden = t === 'free_delivery';
+      valueLabel.textContent = t === 'percentage' ? 'Percent off' : 'Amount off ($)';
+      valueEl.step = t === 'percentage' ? '1' : '0.01';
+    }
+    typeEl.addEventListener('change', syncType);
+    syncType();
+
+    root.querySelector('[data-form]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.hidden = true; savedEl.hidden = true;
+      const type = typeEl.value;
+      const body = {
+        code: root.querySelector('#cf-code').value.trim().toUpperCase() || undefined,
+        discount_type: type,
+        description: root.querySelector('#cf-desc').value.trim() || undefined,
+        min_booking_cents: inputToCents(root.querySelector('#cf-min').value) || 0,
+        max_uses: root.querySelector('#cf-max').value.trim() || null,
+        trailer_id: trailerEl.value || null,
+        expires_at: root.querySelector('#cf-expires').value || null,
+      };
+      if (type === 'percentage') body.discount_value = parseInt(valueEl.value, 10);
+      else if (type === 'flat') body.discount_value = inputToCents(valueEl.value);
+      else body.discount_value = 0;
+
+      saveBtn.disabled = true; saveBtn.textContent = 'Creating…';
+      try {
+        await api.apiFetch('/api/operator/coupons', { method: 'POST', body: JSON.stringify(body) });
+        renderCoupons();
+      } catch (err) {
+        if (handleAuth(err)) return;
+        errEl.textContent = err.message || 'Could not create the coupon.';
+        errEl.hidden = false;
+        saveBtn.disabled = false; saveBtn.textContent = 'Create coupon';
       }
     });
   }

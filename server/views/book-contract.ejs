@@ -24,6 +24,7 @@
     .consent input { width: auto; margin-top: 3px; }
     .linkbtn { background: none; border: 0; color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; }
   </style>
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -158,5 +159,7 @@
       });
     })();
   </script>
+
+  <%- include('partials/footer') %>
 </body>
 </html>

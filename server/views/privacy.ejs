@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy | Glass City Trailer Rentals</title>
+  <meta name="description" content="How Glass City Trailer Rentals collects, uses, and protects your personal information." />
+  <link rel="icon" href="/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="back" href="/">‹ <span>Home</span></a>
+      <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
+    </div>
+  </header>
+
+  <main class="container" id="main">
+    <article class="legal" style="max-width:760px;margin:40px auto 64px;line-height:1.6;">
+      <div class="eyebrow">Legal</div>
+      <h1 class="display" style="font-size:clamp(34px,7vw,56px);margin:8px 0;">Privacy Policy</h1>
+      <p class="dim">Last updated: <%= updated %></p>
+
+      <p>Glass City Trailer Rentals LLC (“Glass City,” “we,” “us,” or “our”) operates the website at this domain and the trailer- and dumpster-rental booking service offered through it. This policy explains what personal information we collect, why we collect it, how we use and protect it, and the choices you have. By using our site or booking a rental, you agree to this policy.</p>
+
+      <h2>Information we collect</h2>
+      <ul>
+        <li><strong>Contact details</strong> — your name, email address, and phone number, so we can confirm your booking, send receipts and reminders, and reach you about your rental.</li>
+        <li><strong>Booking details</strong> — the equipment you rent, rental dates, pickup/return times, notes you provide, and, if you choose delivery, the delivery address.</li>
+        <li><strong>Payment information</strong> — card and billing details, which are collected and processed <strong>directly by Stripe</strong>. We never see or store your full card number; we retain only a Stripe reference and the amounts charged or refunded.</li>
+        <li><strong>Signed rental agreement</strong> — your typed (and optionally drawn) signature, plus the date, time, IP address, and browser user-agent captured at signing, to make the agreement legally enforceable.</li>
+        <li><strong>Technical and analytics data</strong> — basic usage data (pages viewed, device/browser type) collected via Google Analytics and, where enabled, the Meta (Facebook) Pixel, used to understand and improve our site. These tools may set cookies.</li>
+      </ul>
+
+      <h2>How we use your information</h2>
+      <ul>
+        <li>To create, confirm, and manage your booking and rental.</li>
+        <li>To process payments, deposits, refunds, and any additional charges.</li>
+        <li>To send transactional messages — confirmations, receipts, reminders, return summaries, and, after your rental, an optional review request.</li>
+        <li>To prepare and retain your signed rental agreement.</li>
+        <li>To operate, secure, and improve our website and service.</li>
+      </ul>
+
+      <h2>Payment processing (Stripe)</h2>
+      <p>All payments are handled by <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe, Inc.</a>, a PCI-DSS Level 1 certified processor. Card data is transmitted directly to Stripe and never touches our servers. Stripe’s handling of your information is governed by Stripe’s privacy policy.</p>
+
+      <h2>Text messages (SMS via Twilio)</h2>
+      <p>If you provide a mobile number, we send transactional SMS through <a href="https://www.twilio.com/legal/privacy" target="_blank" rel="noopener">Twilio</a> — for example, booking confirmations, pickup/return reminders, charge or refund notices, and a post-rental review request. Message and data rates may apply. You can opt out at any time by replying <strong>STOP</strong> to any message, or by calling us at (419) 654-3584. Opting out may prevent us from sending you booking-related updates by text.</p>
+
+      <h2>Email (Resend)</h2>
+      <p>We send transactional email — confirmations, receipts with your signed agreement attached, reminders, and account notices — using <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend</a>. We do not send marketing email unless you separately opt in.</p>
+
+      <h2>Sharing your information</h2>
+      <p><strong>We do not sell your personal information to anyone.</strong> We share it only with the service providers that make our booking service work — Stripe (payments), Twilio (SMS), Resend (email), Google Analytics, and Meta (where enabled) — and only as needed to provide the service. We may also disclose information if required by law or to protect our legal rights.</p>
+
+      <h2>Data retention</h2>
+      <p>We retain booking and rental records, including signed rental agreements and transaction records, for <strong>seven (7) years</strong> to meet business, tax, and legal-recordkeeping obligations. After that period, records are deleted or anonymized unless a longer retention is required by law or an active dispute.</p>
+
+      <h2>Your rights</h2>
+      <p>You may request access to, correction of, or deletion of your personal information by emailing <a href="mailto:<%= ownerEmail %>"><%= ownerEmail %></a>. We will respond within a reasonable time. Please note that we may need to retain certain records (such as signed agreements and transaction history) for the retention period described above even after a deletion request.</p>
+
+      <h2>Security</h2>
+      <p>We use industry-standard safeguards, including encryption in transit (HTTPS) and at rest via our managed database provider, and access controls on our systems. No method of transmission or storage is perfectly secure, but we work to protect your information.</p>
+
+      <h2>Children</h2>
+      <p>Our service is intended for adults (18+) able to enter a rental contract. We do not knowingly collect information from children.</p>
+
+      <h2>Changes to this policy</h2>
+      <p>We may update this policy from time to time. The “last updated” date above reflects the most recent change.</p>
+
+      <h2>Contact &amp; governing law</h2>
+      <p>Questions about this policy or your information? Email <a href="mailto:<%= ownerEmail %>"><%= ownerEmail %></a> or call (419) 654-3584. This policy is governed by the laws of the State of Ohio.</p>
+    </article>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

@@ -61,6 +61,7 @@ async function sendBookingConfirmation(booking, pdfBuffer, baseUrl) {
       <table style="font-size:14px;border-collapse:collapse">${rows}</table>
       <p>${logistics} Your signed rental agreement is attached as a PDF.</p>
       <p><a href="${baseUrl}/book/${ref}" style="color:#1faa30">View your booking</a></p>
+      <p style="font-size:13px;color:#555">Need to make changes? <a href="${baseUrl}/my-booking?ref=${ref}" style="color:#1faa30">Manage your booking</a> (view details or cancel).</p>
       <p style="color:#888;font-size:12px">Glass City Trailer Rentals LLC · (419) 654-3584</p>
     </div>`;
 
@@ -275,7 +276,48 @@ async function sendDepositOutcome(booking, summary, baseUrl) {
   });
 }
 
+// Notify the customer their booking was cancelled + the refund outcome.
+async function sendCancellation(booking, summary, baseUrl) {
+  const resend = getClient();
+  if (!resend) return { skipped: true };
+  if (!booking.customer_email) return { skipped: true };
+  const body = `
+    <p>Hi ${booking.customer_name || 'there'}, your booking <strong>${booking.ref_code}</strong> (${booking.trailer_name}) has been cancelled.</p>
+    <table style="font-size:14px;border-collapse:collapse">
+      <tr><td style="padding:4px 12px 4px 0;color:#555">Cancellation policy</td><td>${summary.policy}</td></tr>
+      ${summary.rental_refund_cents > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#555">Rental refund</td><td>${formatCents(summary.rental_refund_cents)}</td></tr>` : ''}
+      ${summary.deposit_refund_cents > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#555">Deposit refund</td><td>${formatCents(summary.deposit_refund_cents)}</td></tr>` : ''}
+      <tr><td style="padding:6px 12px 4px 0;color:#555"><strong>Total refund</strong></td><td><strong>${formatCents(summary.total_refund_cents)}</strong></td></tr>
+    </table>
+    ${summary.total_refund_cents > 0 ? '<p>Refunds typically post to your original payment method in 3–5 business days.</p>' : '<p>Per our cancellation policy, no refund applies to this cancellation.</p>'}`;
+  return resend.emails.send({
+    from: config.fromEmail,
+    to: booking.customer_email,
+    subject: `Booking ${booking.ref_code} cancelled — Glass City`,
+    html: shell(`Booking cancelled — ${booking.ref_code}`, body),
+  });
+}
+
+// Post-return review request (~4h after a return). Guarded like the rest.
+async function sendReviewRequest(booking, reviewLink, baseUrl) {
+  const resend = getClient();
+  if (!resend) return { skipped: true };
+  if (!booking.customer_email) return { skipped: true };
+  const body = `
+    <p>Hi ${booking.customer_name || 'there'}, thanks for renting the <strong>${booking.trailer_name}</strong> from Glass City Trailer Rentals — we hope everything went smoothly.</p>
+    <p>If you have a minute, a quick Google review would mean a lot to a small local business like ours and helps other folks find us.</p>
+    ${payButton(reviewLink)}
+    <p style="font-size:13px;color:#555">Or paste this link: <a href="${reviewLink}">${reviewLink}</a></p>
+    <p>Need a trailer or dumpster again? <a href="${baseUrl || ''}/" style="color:#1faa30">Book online anytime.</a></p>`;
+  return resend.emails.send({
+    from: config.fromEmail,
+    to: booking.customer_email,
+    subject: 'How did it go? Leave Glass City a quick review',
+    html: shell('Thanks for renting with Glass City!', body),
+  });
+}
+
 module.exports = {
   isConfigured, sendBookingConfirmation, sendBookingReminder, sendTest, sendStatement,
-  sendChargeNotice, sendExtensionNotice, sendDepositOutcome,
+  sendChargeNotice, sendExtensionNotice, sendDepositOutcome, sendCancellation, sendReviewRequest,
 };

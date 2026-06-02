@@ -19,6 +19,13 @@ app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Marketing analytics tags (GA4 + Pixel), env-gated. Exposed to every EJS view
+// via app.locals so each <head> can include them; empty string when unset.
+const analytics = require('./services/analytics');
+app.locals.analyticsHead = analytics.headTags();
+app.locals.facebookPixelId = analytics.PIXEL_ID;
+app.locals.siteUrl = config.siteUrl;
+
 // Stripe webhook needs the raw request body to verify the signature, so it is
 // registered before the JSON body parser. Use type: '*/*' so the raw body is
 // captured regardless of the Content-Type Stripe sends.
@@ -75,6 +82,22 @@ app.use('/', publicPageRoutes);
 // Placed after explicit routes so /health and /fleet/* win. index.html is the
 // directory index, so GET / serves the existing marketing page unchanged.
 const publicDir = path.join(__dirname, '..', 'public');
+
+// The marketing homepage is a static file, so it can't read env vars to gate
+// analytics. When analytics is configured, inject the tags into <head> once at
+// boot and serve that cached HTML for GET / (otherwise express.static serves
+// the file untouched).
+if (app.locals.analyticsHead) {
+  try {
+    const homepageHtml = require('fs')
+      .readFileSync(path.join(publicDir, 'index.html'), 'utf8')
+      .replace('</head>', `${app.locals.analyticsHead}\n</head>`);
+    app.get('/', (req, res) => res.type('html').send(homepageHtml));
+  } catch (e) {
+    console.error('[analytics] homepage injection skipped:', e.message);
+  }
+}
+
 app.use(express.static(publicDir));
 
 // API/webhook requests get JSON; browser page requests get a rendered HTML page.
@@ -91,7 +114,7 @@ app.use((req, res) => {
   res.status(404).render('error', {
     code: 404,
     title: 'Page not found',
-    message: "We couldn't find that page. It may have moved, or the link may be out of date.",
+    message: "We couldn't find that page — it may have moved or the link may be out of date. Head back home or give us a call.",
   });
 });
 
@@ -108,8 +131,8 @@ app.use((err, req, res, next) => {
     code: status,
     title: status === 404 ? 'Page not found' : 'Something went wrong',
     message: status === 404
-      ? "We couldn't find that page."
-      : 'Something broke on our end. Please try again, or call us and we’ll sort it out.',
+      ? "We couldn't find that page — head back home or give us a call."
+      : 'Something went wrong on our end. Please try again in a moment, or call us directly and we’ll sort it out.',
   });
 });
 

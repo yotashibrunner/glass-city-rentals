@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/site.css" />
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -69,6 +70,7 @@
           <a class="btn btn-ghost" href="/api/bookings/<%= booking.ref_code %>/contract.pdf" target="_blank" rel="noopener" style="margin-top:14px;">Download Signed Agreement (PDF)</a>
         <% } %>
         <a class="btn btn-ghost" href="/book/<%= booking.ref_code %>/calendar.ics" style="margin-top:10px;">Add to Calendar (.ics)</a>
+        <a class="btn btn-ghost" href="/my-booking?ref=<%= booking.ref_code %>" style="margin-top:10px;">Need to make changes? Manage your booking</a>
 
         <% if (!paid && signed) { %>
           <a class="btn btn-primary" href="/book/<%= booking.id %>/contract" style="margin-top:10px;">Complete Payment →</a>
@@ -81,5 +83,13 @@
       <% } %>
     </div>
   </main>
+
+  <%- include('partials/footer') %>
+
+  <% if (booking.status === 'paid' && typeof facebookPixelId !== 'undefined' && facebookPixelId) { %>
+  <script>
+    if (window.fbq) fbq('track', 'Purchase', { value: <%= (booking.total_cents / 100).toFixed(2) %>, currency: 'USD' });
+  </script>
+  <% } %>
 </body>
 </html>

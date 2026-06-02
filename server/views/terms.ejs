@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms of Service | Glass City Trailer Rentals</title>
+  <meta name="description" content="The terms that govern booking and renting equipment from Glass City Trailer Rentals." />
+  <link rel="icon" href="/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="back" href="/">‹ <span>Home</span></a>
+      <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
+    </div>
+  </header>
+
+  <main class="container" id="main">
+    <article class="legal" style="max-width:760px;margin:40px auto 64px;line-height:1.6;">
+      <div class="eyebrow">Legal</div>
+      <h1 class="display" style="font-size:clamp(34px,7vw,56px);margin:8px 0;">Terms of Service</h1>
+      <p class="dim">Last updated: <%= updated %></p>
+
+      <p>These Terms of Service (“Terms”) govern your use of the website and online booking service operated by Glass City Trailer Rentals LLC (“Glass City,” “we,” “us”). By booking or renting equipment, you agree to these Terms and to the rental agreement you sign at checkout. If you do not agree, do not use the service.</p>
+
+      <h2>1. Use of the booking platform</h2>
+      <p>You must be at least 18 years old and able to enter a binding contract. You agree to provide accurate information and to use the site only for lawful purposes. We may refuse or cancel a booking at our discretion (for example, suspected fraud, unsafe use, or equipment unavailability).</p>
+
+      <h2>2. Booking and payment</h2>
+      <p>The <strong>full rental balance is charged at the time of booking</strong> via our payment processor, Stripe. Prices are shown before you confirm and include applicable Ohio and Lucas County sales tax. Where a refundable security deposit applies, it is collected as a separate line item at checkout.</p>
+
+      <h2>3. Rental agreement &amp; e-signature</h2>
+      <p>Before payment, you must review and electronically sign the rental agreement for the equipment you are renting. Your typed name, optional drawn signature, and the date, time, and IP address of signing are recorded. The signed agreement is binding under the federal E-SIGN Act and Ohio’s Uniform Electronic Transactions Act, and its terms govern the rental alongside these Terms.</p>
+
+      <h2>4. Cancellation policy</h2>
+      <ul>
+        <li><strong>More than 48 hours before pickup:</strong> cancel for a <strong>full refund</strong> of the rental balance.</li>
+        <li><strong>Less than 48 hours before pickup (rental not started):</strong> a <strong>50% refund</strong> of the rental balance applies.</li>
+        <li><strong>No-show / after the rental window has started:</strong> <strong>no refund</strong>.</li>
+      </ul>
+      <p>Any refundable security deposit is returned in full on cancellation regardless of timing. You can cancel within your window from the <a href="/my-booking">Manage a Booking</a> page or by calling (419) 654-3584. Refunds are issued to your original payment method and typically post in 3–5 business days.</p>
+
+      <h2>5. Customer responsibilities</h2>
+      <p>You are responsible for: holding a valid driver’s license and any license required to tow; providing a tow vehicle and hitch/electrical connections properly rated for the equipment; securing loads safely; complying with all traffic, weight, and safety laws; and using the equipment only for lawful purposes. You are liable for loss of or damage to the equipment during your rental, normal wear excepted.</p>
+
+      <h2>6. Prohibited items &amp; uses</h2>
+      <p>You may not use the equipment to transport hazardous, flammable, toxic, or illegal materials; to exceed rated load or towing capacity; or in any unlawful or unsafe manner. For roll-off dumpsters, prohibited materials include (without limitation) hazardous waste, liquids, tires (except per the stated tire policy), batteries, and other items prohibited by the receiving facility. Improperly disposed materials, prohibited items, or excess tonnage may result in additional charges.</p>
+
+      <h2>7. Late return</h2>
+      <p>Equipment must be returned by the end of the agreed rental window. Late returns may incur additional daily charges at the prevailing rate and may be billed to the card on file. If you need more time, request an extension before your return date.</p>
+
+      <h2>8. Security deposit</h2>
+      <p>Where a refundable security deposit applies, it is authorized/collected at booking and returned after the equipment is inspected and returned in good condition. We may deduct from the deposit for damage, cleaning, prohibited items, excess tonnage, missing equipment, or late return. If charges exceed the deposit, the difference may be charged to the card on file. You will receive an itemized summary of any deductions.</p>
+
+      <h2>9. Limitation of liability</h2>
+      <p>To the fullest extent permitted by law, Glass City is not liable for any indirect, incidental, special, consequential, or punitive damages, or for property damage, personal injury, or losses arising from your use of the equipment. Our total liability for any claim relating to a rental shall not exceed the amount you paid for that rental. The equipment is provided “as is” to the extent permitted by law; you are responsible for inspecting it before use and reporting any concern before towing or loading.</p>
+
+      <h2>10. Indemnification</h2>
+      <p>You agree to indemnify and hold Glass City harmless from claims, damages, and expenses (including reasonable attorneys’ fees) arising from your use of the equipment, your violation of these Terms or the rental agreement, or your violation of any law or third-party right.</p>
+
+      <h2>11. Governing law &amp; venue</h2>
+      <p>These Terms and any rental are governed by the laws of the State of Ohio, without regard to conflict-of-laws rules. Any dispute shall be brought exclusively in the state or federal courts located in <strong>Lucas County, Ohio</strong>, and you consent to that venue and jurisdiction.</p>
+
+      <h2>12. Changes to these Terms</h2>
+      <p>We may update these Terms from time to time. The “last updated” date reflects the most recent change. Your continued use of the service after a change constitutes acceptance of the updated Terms.</p>
+
+      <h2>13. Contact</h2>
+      <p>Questions? Email <a href="mailto:<%= ownerEmail %>"><%= ownerEmail %></a> or call (419) 654-3584.</p>
+    </article>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

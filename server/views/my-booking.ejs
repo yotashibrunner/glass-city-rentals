@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manage Your Booking | Glass City Trailer Rentals</title>
+  <meta name="description" content="Look up your Glass City rental by reference code, view the details, and cancel within the policy window." />
+  <link rel="icon" href="/images/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="back" href="/">‹ <span>Home</span></a>
+      <a href="/"><img class="logo" src="/images/logo.png" alt="Glass City Trailer Rentals" /></a>
+      <a class="call" href="tel:+14196543584" aria-label="Call Glass City Trailer Rentals">Call</a>
+    </div>
+  </header>
+
+  <main class="container" id="main">
+    <div style="max-width:560px;margin:44px auto 80px;">
+      <div class="eyebrow">Manage a Booking</div>
+      <h1 class="display" style="font-size:clamp(34px,7vw,56px);margin:8px 0;">Find your rental</h1>
+
+      <form id="lookupForm" novalidate style="margin-top:18px;">
+        <label class="fl" for="ref">Enter your booking reference</label>
+        <input type="text" id="ref" placeholder="e.g. GCT-A1B2" autocomplete="off" autocapitalize="characters"
+               style="text-transform:uppercase;" value="<%= ref %>" />
+        <button class="btn btn-primary" id="lookupBtn" type="submit" style="margin-top:12px;">Find my booking</button>
+        <p class="err" id="err" role="alert" aria-live="assertive"></p>
+      </form>
+
+      <div id="card" class="panel" style="position:static;margin-top:22px;" hidden>
+        <div class="quote" style="border-top:0;padding-top:0;">
+          <div class="qrow"><span>Reference</span><span id="cRef"></span></div>
+          <div class="qrow"><span>Status</span><span id="cStatus"></span></div>
+          <div class="qrow"><span>Equipment</span><span id="cTrailer"></span></div>
+          <div class="qrow"><span id="cStartLbl">Pickup</span><span id="cStart"></span></div>
+          <div class="qrow" id="cTimeRow" hidden><span>Time</span><span id="cTime"></span></div>
+          <div class="qrow"><span id="cEndLbl">Return</span><span id="cEnd"></span></div>
+          <div class="qtotal"><span class="lbl">Paid</span><span class="val" id="cPaid"></span></div>
+        </div>
+        <p class="qnote" id="cDeposit" hidden></p>
+        <p class="qnote" id="cRefundHint" style="margin-top:14px;"></p>
+        <button class="btn btn-ghost" id="cancelBtn" type="button" style="margin-top:8px;" hidden></button>
+        <p class="qnote" id="cancelMsg" hidden style="color:var(--green);margin-top:12px;"></p>
+      </div>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    (function () {
+      var el = function (id) { return document.getElementById(id); };
+      var form = el('lookupForm'), refEl = el('ref'), err = el('err'), card = el('card');
+      var current = null;
+
+      function fmtDate(iso) {
+        return new Date(iso).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      // end_at is the midnight after the last rental day — show the day before.
+      function fmtReturn(iso) { return fmtDate(new Date(new Date(iso).getTime() - 86400000).toISOString()); }
+      function fmtTime(iso) {
+        var d = new Date(iso);
+        if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) return null;
+        return d.toLocaleTimeString('en-US', { timeZone: 'UTC', hour: 'numeric', minute: '2-digit' });
+      }
+      var STATUS_LABEL = {
+        pending: 'Pending', signed: 'Signed — payment pending', paid: 'Confirmed & paid',
+        confirmed: 'Confirmed', out: 'Out — rental active', returned: 'Returned', cancelled: 'Cancelled',
+      };
+
+      function paint(b) {
+        current = b;
+        el('cRef').textContent = b.ref_code;
+        el('cStatus').textContent = STATUS_LABEL[b.status] || b.status;
+        el('cTrailer').textContent = b.trailer;
+        var isDelivery = b.fulfillment === 'delivery';
+        el('cStartLbl').textContent = isDelivery ? 'Delivery' : 'Pickup';
+        el('cEndLbl').textContent = isDelivery ? 'Pickup' : 'Return';
+        el('cStart').textContent = fmtDate(b.start_at);
+        el('cEnd').textContent = fmtReturn(b.end_at);
+        var t = fmtTime(b.start_at);
+        el('cTimeRow').hidden = !t;
+        if (t) el('cTime').textContent = t;
+        el('cPaid').textContent = b.amount_paid_fmt || b.total_fmt;
+
+        var dep = el('cDeposit');
+        if (b.deposit_status === 'held') { dep.hidden = false; dep.textContent = 'Refundable deposit held: ' + (b.deposit_paid_fmt || ''); }
+        else dep.hidden = true;
+
+        el('cRefundHint').textContent = b.refund_hint || '';
+        var btn = el('cancelBtn');
+        if (b.cancellable) {
+          btn.hidden = false;
+          btn.textContent = (b.refund_hint && b.refund_hint.indexOf('50%') >= 0) ? 'Cancel — 50% refund applies' : 'Cancel for full refund';
+        } else {
+          btn.hidden = true;
+        }
+        el('cancelMsg').hidden = true;
+        card.hidden = false;
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        err.textContent = ''; card.hidden = true;
+        var ref = refEl.value.trim().toUpperCase();
+        if (!ref) { err.textContent = 'Enter your booking reference (e.g. GCT-A1B2).'; return; }
+        var btn = el('lookupBtn'); btn.disabled = true; btn.textContent = 'Looking up…';
+        try {
+          var res = await fetch('/api/bookings/' + encodeURIComponent(ref));
+          if (res.status === 404) throw new Error('We couldn’t find a booking with that reference. Double-check the code, or call (419) 654-3584.');
+          if (!res.ok) throw new Error('Something went wrong. Please try again.');
+          paint(await res.json());
+        } catch (e2) {
+          err.textContent = e2.message;
+        } finally {
+          btn.disabled = false; btn.textContent = 'Find my booking';
+        }
+      });
+
+      el('cancelBtn').addEventListener('click', async function () {
+        if (!current) return;
+        if (!window.confirm('Are you sure you want to cancel booking ' + current.ref_code + '? This cannot be undone.')) return;
+        var btn = el('cancelBtn'); btn.disabled = true; btn.textContent = 'Cancelling…';
+        try {
+          var res = await fetch('/api/bookings/' + encodeURIComponent(current.ref_code) + '/cancel', { method: 'POST' });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(data.error || 'Could not cancel this booking.');
+          var msg = el('cancelMsg');
+          var refund = data.summary && data.summary.total_refund_cents;
+          msg.textContent = 'Your booking is cancelled.' + (refund ? ' A refund is being processed — watch for a confirmation email.' : ' Per our policy, no refund applies.');
+          msg.hidden = false;
+          btn.hidden = true;
+          el('cStatus').textContent = 'Cancelled';
+          el('cRefundHint').textContent = '';
+        } catch (e3) {
+          err.textContent = e3.message;
+          btn.disabled = false; btn.textContent = 'Cancel booking';
+        }
+      });
+
+      // Auto-look up when a ref was passed in the URL.
+      if (refEl.value.trim()) form.dispatchEvent(new Event('submit'));
+    })();
+  </script>
+</body>
+</html>

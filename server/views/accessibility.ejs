@@ -18,6 +18,7 @@
     .doc a { color: var(--green); text-decoration: underline; }
     .updated { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .1em; }
   </style>
+  <%- typeof analyticsHead !== 'undefined' ? analyticsHead : '' %>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -71,5 +72,7 @@
       <p style="margin-top:28px;"><a href="/">← Back to home</a></p>
     </div>
   </main>
+
+  <%- include('partials/footer') %>
 </body>
 </html>

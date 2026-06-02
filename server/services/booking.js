@@ -7,6 +7,7 @@
 
 const { pool } = require('../db');
 const trailerSvc = require('./trailer');
+const couponsSvc = require('./coupons');
 const { computeQuote, DELIVERY_FEE_CENTS } = require('./pricing');
 const { OCCUPYING_STATUSES } = require('./availability');
 const { buildAgreement, toPlainText, CONTRACT_VERSION } = require('./contract');
@@ -112,7 +113,22 @@ async function createBooking(input) {
     if (!deliveryAddress) throw badRequest('A delivery address is required for delivery.');
     deliveryFee = DELIVERY_FEE_CENTS;
   }
-  const totalCents = quote.total_cents + deliveryFee;
+
+  // Optional discount code. Resolved + validated server-side (never trusted from
+  // the client); throws a tagged error if a code is given but invalid.
+  let couponId = null;
+  let discountCents = 0;
+  if (input.coupon_code) {
+    ({ couponId, discountCents } = await couponsSvc.resolveForBooking({
+      code: input.coupon_code,
+      trailerId: trailer.id,
+      baseAmountCents: quote.base_cents,
+      deliveryFeeCents: deliveryFee,
+      fulfillment,
+    }));
+  }
+
+  const totalCents = Math.max(0, quote.total_cents + deliveryFee - discountCents);
 
   const client = await pool.connect();
   try {
@@ -155,12 +171,14 @@ async function createBooking(input) {
           `INSERT INTO bookings
              (ref_code, trailer_id, customer_id, start_at, end_at, period_type, quantity,
               tire_count, base_amount_cents, extra_charges_cents, tax_cents, total_cents,
-              customer_notes, status, fulfillment, delivery_address, delivery_fee_cents)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,$15,$16)
+              customer_notes, status, fulfillment, delivery_address, delivery_fee_cents,
+              coupon_id, discount_applied_cents)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending',$14,$15,$16,$17,$18)
            RETURNING id, ref_code`,
           [ref, trailer.id, customerId, startAt.toISOString(), end.toISOString(), periodType, quantity,
             tireCount, baseAmount, extraCharges, quote.tax_cents, totalCents,
-            (input.notes || '').trim() || null, fulfillment, deliveryAddress, deliveryFee]
+            (input.notes || '').trim() || null, fulfillment, deliveryAddress, deliveryFee,
+            couponId, discountCents]
         );
         booking = res.rows[0];
       } catch (e) {
@@ -195,11 +213,12 @@ async function fetchBooking(where, value) {
             t.size_label, t.hitch_requirement, t.plug_requirement, t.per_tire_cents,
             t.deposit_cents AS trailer_deposit_cents, t.deposit_enabled AS trailer_deposit_enabled,
             c.name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
-            m.name AS managed_by_name
+            m.name AS managed_by_name, cp.code AS coupon_code
        FROM bookings b
        JOIN trailers t ON t.id = b.trailer_id
        JOIN customers c ON c.id = b.customer_id
        LEFT JOIN admin_users m ON m.id = b.managed_by
+       LEFT JOIN coupons cp ON cp.id = b.coupon_id
       WHERE ${where} = $1`,
     [value]
   );
@@ -326,13 +345,15 @@ const OPERATOR_SELECT = `
          b.fulfillment, b.delivery_address, b.delivery_fee_cents,
          b.deposit_paid_cents, b.deposit_refunded_cents, b.deposit_status,
          b.stripe_customer_id, b.stripe_payment_method_id, b.stripe_payment_intent_id,
+         b.coupon_id, b.discount_applied_cents, cp.code AS coupon_code,
          t.id AS trailer_id, t.name AS trailer_name, t.type AS trailer_type,
          t.slug AS trailer_slug, t.size_label, t.status AS trailer_status,
          t.deposit_cents AS trailer_deposit_cents, t.deposit_enabled AS trailer_deposit_enabled,
          c.name AS customer_name, c.phone AS customer_phone, c.email AS customer_email
     FROM bookings b
     JOIN trailers t ON t.id = b.trailer_id
-    JOIN customers c ON c.id = b.customer_id`;
+    JOIN customers c ON c.id = b.customer_id
+    LEFT JOIN coupons cp ON cp.id = b.coupon_id`;
 
 // Statuses that represent an upcoming, confirmed-but-not-yet-out rental.
 const UPCOMING_STATUSES = ['paid', 'confirmed'];

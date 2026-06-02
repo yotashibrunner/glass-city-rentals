@@ -126,11 +126,47 @@ async function runHourly(baseUrl) {
   }
 }
 
+// ── Post-return review request ────────────────────────────────────────────
+// ~4 hours after a return, ask the customer for a Google review (once). The
+// window floor (24h) avoids ever messaging pre-feature/old returns; the ceiling
+// (3.5h) gives the customer a beat after drop-off. review_requested_at guards
+// against duplicates. Skipped entirely when GOOGLE_REVIEW_LINK is unset.
+async function runReviewRequests(baseUrl) {
+  if (!config.googleReviewLink) {
+    console.log('[reminders] GOOGLE_REVIEW_LINK not set — skipping review requests');
+    return;
+  }
+  const now = Date.now();
+  const floor = new Date(now - 24 * 60 * 60000).toISOString();   // not older than 24h
+  const ceiling = new Date(now - 3.5 * 60 * 60000).toISOString(); // at least 3.5h ago
+
+  const { rows } = await pool.query(
+    `${REMINDER_SELECT}
+      WHERE b.status = 'returned' AND b.review_requested_at IS NULL
+        AND b.returned_at >= $1 AND b.returned_at <= $2`,
+    [floor, ceiling]
+  );
+  console.log(`[reminders] ${rows.length} review request(s)`);
+  const link = config.googleReviewLink;
+  for (const b of rows) {
+    await emailSvc.sendReviewRequest(b, link, baseUrl).catch((e) => console.error('   review email:', e.message));
+    if (b.customer_phone) {
+      const msg = `Thanks for renting with Glass City! Hope everything went smoothly. A quick Google review would mean a lot to us: ${link}`;
+      await smsSvc.sendSMS(b.customer_phone, msg).catch((e) => console.error('   review sms:', e.message));
+    }
+    await pool.query('UPDATE bookings SET review_requested_at = NOW() WHERE id = $1', [b.id])
+      .catch((e) => console.error('   review flag:', e.message));
+  }
+}
+
 async function main() {
   const mode = process.argv[2] === 'hourly' ? 'hourly' : 'morning';
   const baseUrl = config.baseUrl;
   if (mode === 'hourly') await runHourly(baseUrl);
   else await runMorning(baseUrl);
+  // Review requests run in both modes (idempotent) so a missed hourly run is
+  // still caught by the next pass.
+  await runReviewRequests(baseUrl);
   console.log('[reminders] done');
 }
 

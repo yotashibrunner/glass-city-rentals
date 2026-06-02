@@ -16,6 +16,7 @@ const bookingSvc = require('../services/booking');
 const stripeSvc = require('../services/stripe');
 const settingsSvc = require('../services/settings');
 const chargesSvc = require('../services/charges');
+const couponsSvc = require('../services/coupons');
 const { generatePdf } = require('../services/contract');
 const { getBusyRanges } = require('../services/availability');
 const { computeQuote } = require('../services/pricing');
@@ -141,6 +142,23 @@ router.post('/quote', quoteLimiter, async (req, res, next) => {
   }
 });
 
+// POST /api/coupons/validate — { code, trailer_id?, base_amount_cents }.
+// Returns the discount result (or { valid:false, message }). Rate-limited to
+// deter brute-forcing codes.
+router.post('/coupons/validate', quoteLimiter, async (req, res, next) => {
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const result = await couponsSvc.validateCoupon({
+      code: body.code,
+      trailerId: body.trailer_id || null,
+      baseAmountCents: Math.max(0, parseInt(body.base_amount_cents, 10) || 0),
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Absolute origin for Stripe redirects, honoring the proxy (trust proxy is set).
 function originOf(req) {
   return `${req.protocol}://${req.get('host')}`;
@@ -209,19 +227,53 @@ router.post('/bookings/:id/checkout', async (req, res, next) => {
   }
 });
 
+// POST /api/bookings/:ref/cancel — customer self-service cancellation. The ref
+// code is the secret (no auth). Refund per the 48-hour policy; deposit always
+// refunded in full.
+router.post('/bookings/:ref/cancel', bookingLimiter, async (req, res, next) => {
+  try {
+    const result = await chargesSvc.cancelBooking(req.params.ref);
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
 // GET /api/bookings/:ref — public booking lookup (limited fields).
 router.get('/bookings/:ref', async (req, res, next) => {
   try {
     const b = await bookingSvc.getByRef(req.params.ref);
     if (!b) return res.status(404).json({ error: 'Booking not found' });
+
+    // Cancellation eligibility + refund hint, mirroring services/charges.js
+    // (the server re-checks authoritatively on cancel).
+    const now = Date.now();
+    const start = new Date(b.start_at).getTime();
+    const cancellable = ['paid', 'confirmed'].includes(b.status) && now < start;
+    let refundHint = null;
+    if (cancellable) {
+      refundHint = (start - now > 48 * 3600 * 1000)
+        ? 'Cancel now for a full refund.'
+        : 'Less than 48 hours to pickup — a 50% refund applies.';
+    } else if (['paid', 'confirmed'].includes(b.status)) {
+      refundHint = 'The rental window has started — cancellation isn’t available online.';
+    }
+
     res.json({
       ref_code: b.ref_code,
       status: b.status,
       trailer: b.trailer_name,
+      fulfillment: b.fulfillment,
       start_at: b.start_at,
       end_at: b.end_at,
       total_fmt: formatCents(b.total_cents),
+      amount_paid_fmt: formatCents(b.amount_paid_cents),
+      deposit_status: b.deposit_status,
+      deposit_paid_fmt: formatCents(b.deposit_paid_cents),
       signed: !!b.contract_signed_at,
+      cancellable,
+      refund_hint: refundHint,
     });
   } catch (err) {
     next(err);

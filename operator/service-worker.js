@@ -15,7 +15,7 @@
  * Bump CACHE_VERSION whenever a shell file changes to force a refresh.
  */
 
-const CACHE_VERSION = 'gc-operator-v14';
+const CACHE_VERSION = 'gc-operator-v15';
 
 // Precache the shell so the app is installable and works offline.
 const SHELL = [

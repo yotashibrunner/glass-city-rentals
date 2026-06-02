@@ -10,6 +10,7 @@
 // Literal /book paths are declared before /book/:ref so they aren't shadowed.
 
 const express = require('express');
+const config = require('../config');
 const trailerSvc = require('../services/trailer');
 const bookingSvc = require('../services/booking');
 const { computeQuote, DELIVERY_FEE_CENTS } = require('../services/pricing');
@@ -17,6 +18,14 @@ const { formatCents } = require('../utils/money');
 const { getTaxRate } = require('../services/settings');
 
 const router = express.Router();
+
+// Canonical absolute origin for SEO links: SITE_URL/BASE_URL, else the request.
+function siteOrigin(req) {
+  return config.siteUrl || `${req.protocol}://${req.get('host')}`;
+}
+function todayLong() {
+  return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+}
 
 // GET /fleet — the fleet lives in the marketing page's #fleet grid (each card
 // links to /fleet/:slug). Send the "Build a Quote" CTAs there.
@@ -28,6 +37,69 @@ router.get('/accessibility', (req, res) => {
     year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
   });
   res.render('accessibility', { updated });
+});
+
+// GET /privacy — privacy policy.
+router.get('/privacy', (req, res) => {
+  res.render('privacy', { updated: todayLong(), ownerEmail: config.ownerEmail || 'glasscitytrailerrentals@gmail.com' });
+});
+
+// GET /terms — terms of service.
+router.get('/terms', (req, res) => {
+  res.render('terms', { updated: todayLong(), ownerEmail: config.ownerEmail || 'glasscitytrailerrentals@gmail.com' });
+});
+
+// GET /my-booking — customer self-service lookup + cancel.
+router.get('/my-booking', (req, res) => {
+  res.render('my-booking', { ref: (req.query.ref || '').toString().trim() });
+});
+
+// GET /robots.txt — allow the public site, disallow app/api/webhooks.
+router.get('/robots.txt', (req, res) => {
+  const origin = siteOrigin(req);
+  res.type('text/plain').send(
+    [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /operator',
+      'Disallow: /api/',
+      'Disallow: /webhooks/',
+      `Sitemap: ${origin}/sitemap.xml`,
+      '',
+    ].join('\n')
+  );
+});
+
+// GET /sitemap.xml — static pages + one URL per active trailer (dumpsters link
+// to /book/dumpster; trailers to /fleet/:slug).
+router.get('/sitemap.xml', async (req, res, next) => {
+  try {
+    const origin = siteOrigin(req);
+    const trailers = await trailerSvc.getActiveTrailers();
+    const url = (loc, changefreq, priority) =>
+      `  <url><loc>${origin}${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+    const urls = [
+      url('/', 'weekly', '1.0'),
+      url('/fleet', 'weekly', '0.9'),
+    ];
+    let hasDumpster = false;
+    for (const t of trailers) {
+      if (t.type === 'dumpster') hasDumpster = true;
+      else urls.push(url(`/fleet/${t.slug}`, 'weekly', '0.8'));
+    }
+    if (hasDumpster) urls.push(url('/book/dumpster', 'weekly', '0.8'));
+    urls.push(url('/privacy', 'yearly', '0.3'));
+    urls.push(url('/terms', 'yearly', '0.3'));
+    urls.push(url('/accessibility', 'yearly', '0.3'));
+
+    res.type('application/xml').send(
+      `<?xml version="1.0" encoding="UTF-8"?>\n`
+      + `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+      + `${urls.join('\n')}\n</urlset>\n`
+    );
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.get('/fleet/:slug', async (req, res, next) => {

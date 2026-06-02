@@ -123,6 +123,14 @@
           </span>
           <span class="nav-chevron" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="nav-item" data-nav="coupons" data-admin hidden>
+          <span class="nav-icon" aria-hidden="true">🏷️</span>
+          <span class="nav-text">
+            <span class="nav-label">Coupons</span>
+            <span class="nav-sub muted">Discount codes</span>
+          </span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
         <button type="button" class="nav-item" data-nav="settings" data-admin hidden>
           <span class="nav-icon" aria-hidden="true">⚙️</span>
           <span class="nav-text">
@@ -230,6 +238,7 @@
             <div><dt>Return</dt><dd data-end></dd></div>
             <div><dt>Total paid</dt><dd data-paid></dd></div>
             <div data-deposit-row hidden><dt>Security deposit</dt><dd data-deposit></dd></div>
+            <div data-coupon-row hidden><dt>Discount</dt><dd data-coupon></dd></div>
             <div data-notes-row hidden><dt>Customer notes</dt><dd data-notes></dd></div>
             <div data-opnotes-row hidden><dt>Operator notes</dt><dd data-opnotes></dd></div>
           </dl>
@@ -380,6 +389,87 @@
         <p class="error" data-error hidden></p>
         <p class="saved muted" data-saved hidden></p>
         <button type="submit" class="btn btn-primary" data-save>Add charge</button>
+      </form>
+    </main>
+  </template>
+
+  <!-- ── Coupons (admin) ────────────────────────────────────────────── -->
+  <template id="tpl-coupons">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Back</button>
+      <span class="topbar-title">Coupons</span>
+      <button type="button" class="btn btn-ghost" data-add>+ New</button>
+    </header>
+    <main class="screen content">
+      <p class="empty" data-loading>Loading…</p>
+      <p class="error" data-error hidden></p>
+      <ul class="coupon-list" data-list hidden></ul>
+      <p class="empty" data-empty hidden>No coupons yet. Tap “+ New” to create one.</p>
+    </main>
+  </template>
+
+  <template id="tpl-coupon-row">
+    <li class="coupon-row">
+      <div class="coupon-main">
+        <span class="coupon-code" data-code></span>
+        <span class="coupon-sub muted" data-sub></span>
+      </div>
+      <div class="coupon-tail">
+        <span class="badge" data-status></span>
+        <button type="button" class="btn btn-toggle" data-toggle></button>
+        <button type="button" class="btn btn-danger" data-del hidden>Delete</button>
+      </div>
+    </li>
+  </template>
+
+  <!-- New-coupon form -->
+  <template id="tpl-coupon-form">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-back>‹ Cancel</button>
+      <span class="topbar-title">New coupon</span>
+      <span class="topbar-spacer"></span>
+    </header>
+    <main class="screen content">
+      <form class="card detail-form" data-form novalidate>
+        <div class="field">
+          <label for="cf-code">Code <span class="muted">(blank = auto-generate)</span></label>
+          <input id="cf-code" type="text" autocapitalize="characters" style="text-transform:uppercase" />
+        </div>
+        <div class="field">
+          <label for="cf-type">Discount type</label>
+          <select id="cf-type">
+            <option value="percentage">Percentage off</option>
+            <option value="flat">Flat amount off</option>
+            <option value="free_delivery">Free delivery</option>
+          </select>
+        </div>
+        <div class="field" data-value-field>
+          <label for="cf-value" data-value-label>Percent off</label>
+          <input id="cf-value" type="number" min="0" step="1" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="cf-min">Minimum booking ($, before tax — optional)</label>
+          <input id="cf-min" type="number" min="0" step="0.01" inputmode="decimal" />
+        </div>
+        <div class="field">
+          <label for="cf-max">Max uses (blank = unlimited)</label>
+          <input id="cf-max" type="number" min="1" step="1" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="cf-trailer">Restrict to trailer (optional)</label>
+          <select id="cf-trailer"><option value="">All trailers</option></select>
+        </div>
+        <div class="field">
+          <label for="cf-expires">Expires (optional)</label>
+          <input id="cf-expires" type="date" />
+        </div>
+        <div class="field">
+          <label for="cf-desc">Description (optional)</label>
+          <input id="cf-desc" type="text" maxlength="120" />
+        </div>
+        <p class="error" data-error hidden></p>
+        <p class="saved muted" data-saved hidden></p>
+        <button type="submit" class="btn btn-primary" data-save>Create coupon</button>
       </form>
     </main>
   </template>

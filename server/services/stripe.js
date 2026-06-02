@@ -42,19 +42,27 @@ async function createCheckoutSession(booking, { successUrl, cancelUrl, depositCe
   if (!stripe) throw unconfigured();
 
   const deliveryFee = booking.delivery_fee_cents || 0;
-  const rentalAmount = booking.total_cents - deliveryFee; // base + tax
+  // total_cents is already net of any discount; the rental line is whatever
+  // remains after the (separate) delivery line. Guard against a discount pulling
+  // it to zero/negative — Stripe rejects a $0 line item.
+  const rentalAmount = booking.total_cents - deliveryFee; // base + tax − discount
 
-  const lineItems = [{
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: `${booking.trailer_name} — ${booking.ref_code}`,
-        description: 'Glass City Trailer Rentals — rental balance',
+  const lineItems = [];
+  if (rentalAmount > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: `${booking.trailer_name} — ${booking.ref_code}`,
+          description: booking.discount_applied_cents > 0
+            ? 'Glass City Trailer Rentals — rental balance (discount applied)'
+            : 'Glass City Trailer Rentals — rental balance',
+        },
+        unit_amount: rentalAmount,
       },
-      unit_amount: rentalAmount,
-    },
-    quantity: 1,
-  }];
+      quantity: 1,
+    });
+  }
   if (deliveryFee > 0) {
     lineItems.push({
       price_data: {
@@ -85,7 +93,12 @@ async function createCheckoutSession(booking, { successUrl, cancelUrl, depositCe
     line_items: lineItems,
     customer_email: booking.customer_email || undefined,
     client_reference_id: booking.ref_code,
-    metadata: { type: 'booking', booking_id: booking.id, ref_code: booking.ref_code, deposit_cents: String(deposit) },
+    metadata: {
+      type: 'booking', booking_id: booking.id, ref_code: booking.ref_code,
+      deposit_cents: String(deposit),
+      privacy_url: `${config.siteUrl || config.baseUrl}/privacy`,
+      terms_url: `${config.siteUrl || config.baseUrl}/terms`,
+    },
     success_url: successUrl,
     cancel_url: cancelUrl,
   };

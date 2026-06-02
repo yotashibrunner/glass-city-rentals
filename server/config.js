@@ -86,6 +86,21 @@ const config = {
   // Optional: when unset, error reporting is a no-op (errors still log to the
   // console). Set SENTRY_DSN to capture server errors.
   sentryDsn: process.env.SENTRY_DSN || '',
+
+  // ── Public site URL (SEO) ───────────────────────────────────────────
+  // Canonical absolute origin used to build sitemap.xml / robots.txt links.
+  // Falls back to BASE_URL, then to the request host at runtime.
+  siteUrl: (process.env.SITE_URL || process.env.BASE_URL || '').replace(/\/+$/, ''),
+
+  // ── Marketing analytics (optional, env-gated) ───────────────────────
+  // When unset, no analytics scripts are emitted (silent). GA4 measurement ID
+  // (G-XXXXXXXXXX) and Meta/Facebook Pixel ID.
+  googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID || '',
+  facebookPixelId: process.env.FACEBOOK_PIXEL_ID || '',
+
+  // Direct Google review link for the post-return review request (cron). When
+  // unset, the review request is skipped.
+  googleReviewLink: process.env.GOOGLE_REVIEW_LINK || '',
 };
 
 config.isProduction = config.env === 'production';

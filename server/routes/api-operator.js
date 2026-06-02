@@ -36,6 +36,7 @@ const reportsSvc = require('../services/reports');
 const auditSvc = require('../services/audit');
 const chargesSvc = require('../services/charges');
 const settingsSvc = require('../services/settings');
+const couponsSvc = require('../services/coupons');
 const { generateStatementPdf } = require('../services/statement');
 const { requireAdmin, requireRole } = require('../middleware/auth');
 const { formatCents } = require('../utils/money');
@@ -193,6 +194,7 @@ function serializeBooking(b) {
     delivery_fee_fmt: formatCents(b.delivery_fee_cents),
     deposit_paid_fmt: formatCents(b.deposit_paid_cents),
     deposit_refunded_fmt: formatCents(b.deposit_refunded_cents),
+    discount_applied_fmt: formatCents(b.discount_applied_cents),
     time_fmt: fmtTime(b.start_at),
     contract_url: b.contract_signed_at ? `/api/bookings/${b.ref_code}/contract.pdf` : null,
   };
@@ -326,6 +328,44 @@ router.patch('/charges/:id', canManageBooking, async (req, res, next) => {
   try {
     const charge = await chargesSvc.updateCharge(id, req.body || {});
     res.json({ charge });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+// ── Coupons (admin) ────────────────────────────────────────────────────────
+router.get('/coupons', requireAdmin, async (req, res, next) => {
+  try {
+    res.json({ coupons: await couponsSvc.listCoupons() });
+  } catch (err) { next(err); }
+});
+
+router.post('/coupons', requireAdmin, async (req, res, next) => {
+  try {
+    const coupon = await couponsSvc.createCoupon(req.body || {}, req.user.id);
+    res.status(201).json({ coupon });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+router.patch('/coupons/:id', requireAdmin, async (req, res, next) => {
+  if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'Invalid coupon id' });
+  try {
+    const coupon = await couponsSvc.updateCoupon(req.params.id, req.body || {});
+    res.json({ coupon });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+});
+
+router.delete('/coupons/:id', requireAdmin, async (req, res, next) => {
+  if (!UUID_RE.test(req.params.id)) return res.status(400).json({ error: 'Invalid coupon id' });
+  try {
+    res.json(await couponsSvc.deleteCoupon(req.params.id));
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);

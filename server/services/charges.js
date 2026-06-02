@@ -453,9 +453,94 @@ async function finalizeReturn(bookingId, condition, operatorId) {
   return { booking: updated, summary, settlement: result };
 }
 
+// ── Customer self-service cancellation ─────────────────────────────────────
+// Policy: >48h before start → full rental refund; <48h and not yet started →
+// 50%; already started (no-show) → 0%. The security deposit is always refunded
+// in full. Public endpoint — the ref code is the secret. Returns a summary.
+const CANCEL_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+async function cancelBooking(ref) {
+  const booking = await bookingSvc.getByRef(ref);
+  if (!booking) throw badRequest('Booking not found.', 404);
+  if (booking.status === 'cancelled') throw badRequest('This booking is already cancelled.', 409);
+  if (!['paid', 'confirmed'].includes(booking.status)) {
+    throw badRequest('This booking can no longer be cancelled online. Please call (419) 654-3584.', 409);
+  }
+
+  const now = Date.now();
+  const start = new Date(booking.start_at).getTime();
+  let refundPct;
+  let policyLabel;
+  if (now >= start) { refundPct = 0; policyLabel = 'no-show (no refund)'; }
+  else if (start - now > CANCEL_WINDOW_MS) { refundPct = 1; policyLabel = 'full refund'; }
+  else { refundPct = 0.5; policyLabel = '50% refund (within 48 hours)'; }
+
+  const rentalPaid = Math.max(0, Number(booking.amount_paid_cents) || 0);
+  const rentalRefund = Math.round(rentalPaid * refundPct);
+  const depositHeld = booking.deposit_status === 'held' ? Math.max(0, Number(booking.deposit_paid_cents) || 0) : 0;
+  const totalRefund = rentalRefund + depositHeld;
+
+  // 1) Mark cancelled + settle the deposit state in one transaction.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const cur = await client.query('SELECT status FROM bookings WHERE id = $1 FOR UPDATE', [booking.id]);
+    if (!cur.rows.length) throw badRequest('Booking not found.', 404);
+    if (!['paid', 'confirmed'].includes(cur.rows[0].status)) {
+      throw badRequest('This booking can no longer be cancelled online.', 409);
+    }
+    await client.query(
+      `UPDATE bookings SET status='cancelled', updated_at=NOW(),
+          deposit_status = CASE WHEN $2 > 0 THEN 'refunded' ELSE deposit_status END,
+          deposit_refunded_cents = CASE WHEN $2 > 0 THEN $2 ELSE deposit_refunded_cents END
+        WHERE id=$1`,
+      [booking.id, depositHeld]
+    );
+    await client.query(
+      `INSERT INTO audit_log (action, entity_type, entity_id, details)
+       VALUES ('booking.cancel', 'booking', $1, $2)`,
+      [booking.id, JSON.stringify({ refund_pct: refundPct, rental_refund_cents: rentalRefund, deposit_refund_cents: depositHeld })]
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  // 2) Stripe refund (best-effort; one refund covers rental + deposit since both
+  //    were captured on the same payment intent).
+  const settlement = { refunded: false };
+  if (totalRefund > 0 && booking.stripe_payment_intent_id) {
+    try {
+      await stripeSvc.refund({ paymentIntentId: booking.stripe_payment_intent_id, amountCents: totalRefund });
+      settlement.refunded = true;
+    } catch (e) {
+      console.error('[charges] cancellation refund failed:', e.message);
+      settlement.error = e.message;
+    }
+  }
+
+  // 3) Notify the customer.
+  const summary = {
+    policy: policyLabel, refund_pct: refundPct,
+    rental_refund_cents: rentalRefund, deposit_refund_cents: depositHeld, total_refund_cents: totalRefund,
+  };
+  const refundFmt = formatCents(totalRefund);
+  await notifyCustomer(booking, {
+    sms: totalRefund > 0
+      ? `Glass City: your booking ${booking.ref_code} is cancelled. A refund of ${refundFmt} (${policyLabel}) is being processed. Questions? (419) 654-3584`
+      : `Glass City: your booking ${booking.ref_code} is cancelled. Per our policy, no refund applies. Questions? (419) 654-3584`,
+    emailFn: () => emailSvc.sendCancellation(booking, summary, config.baseUrl),
+  });
+
+  return { ref_code: booking.ref_code, status: 'cancelled', summary, settlement };
+}
+
 module.exports = {
   depositDueCents,
   listCharges, listExtensions, createCharge, updateCharge, markChargePaidBySession,
   createExtension, markExtensionPaidBySession,
-  finalizeReturn, chargeTypeLabel, serializeCharge, serializeExtension,
+  finalizeReturn, cancelBooking, chargeTypeLabel, serializeCharge, serializeExtension,
 };

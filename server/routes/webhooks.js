@@ -9,6 +9,7 @@ const express = require('express');
 const stripeSvc = require('../services/stripe');
 const bookingSvc = require('../services/booking');
 const chargesSvc = require('../services/charges');
+const couponsSvc = require('../services/coupons');
 const emailSvc = require('../services/email');
 const notifySvc = require('../services/notify');
 const { generatePdf } = require('../services/contract');
@@ -81,6 +82,15 @@ router.post('/stripe', async (req, res) => {
         }
       } catch (e) {
         console.error('[webhook] confirmation email failed:', e.message);
+      }
+
+      // Record the coupon use (idempotent) — only counts a PAID booking.
+      if (booking.coupon_id) {
+        try {
+          await couponsSvc.recordUse(booking.coupon_id, booking.id, booking.discount_applied_cents);
+        } catch (e) {
+          console.error('[webhook] coupon use record failed:', e.message);
+        }
       }
 
       // Alert the operator(s) on push + SMS. Best-effort: notify never throws.
